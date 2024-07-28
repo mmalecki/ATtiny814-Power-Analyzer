@@ -24,16 +24,16 @@ FUSE7    = 0x00
 FUSE8    = 0x00
 
 # Programmer Settings
-PROGRMR ?= serialupdi
-PORT    ?= /dev/ttyUSB0
+PROGRMR ?= avrdude
+PORT    ?= /dev/ttyACM0
 
 # Toolchain
 CC       = avr-gcc
 OBJCOPY  = avr-objcopy
 OBJDUMP  = avr-objdump
 AVRSIZE  = avr-size
-PYPROG   = python3 -u ./tools/pymcuprog/prog.py -t uart -u $(PORT) -b 230400 -d $(DEVICE)
-AVRDUDE  = avrdude -C ./tools/avrdude/avrdude.conf -c $(PROGRMR) -P $(PORT) -p $(DEVICE)
+PYPROG   = pymcuprog -t uart -u $(PORT) -b 230400 -d $(DEVICE)
+AVRDUDE  = avrdude -c jtag2updi -P $(PORT) -p $(DEVICE)
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.s *.d
 
 # Compiler Flags
@@ -67,7 +67,7 @@ flash:	install
 install: hex
 	@echo "Installing $(TARGET).hex to $(DEVICE) using $(PROGRMR) ..."
 ifeq ($(PROGRMR),serialupdi)
-	@$(PYPROG) --fuses 0:$(FUSE0) 1:$(FUSE1) 2:$(FUSE2) 4:$(FUSE4) 5:$(FUSE5) 6:$(FUSE6) 7:$(FUSE7) 8:$(FUSE8) -f $(TARGET).hex -a write
+	@$(PYPROG) --fuses 0:$(FUSE0) 1:$(FUSE1) 2:$(FUSE2) 4:$(FUSE4) 5:$(FUSE5) 6:$(FUSE6) 7:$(FUSE7) 8:$(FUSE8) -f $(TARGET).hex write
 else
 	@$(AVRDUDE) -Ufuse0:w:$(FUSE0):m -Ufuse1:w:$(FUSE1):m -Ufuse2:w:$(FUSE2):m -Ufuse4:w:$(FUSE4):m -Ufuse5:w:$(FUSE5):m -Ufuse6:w:$(FUSE6):m -Ufuse7:w:$(FUSE7):m -Ufuse8:w:$(FUSE8):m -U flash:w:$(TARGET).hex:i
 endif
@@ -75,7 +75,7 @@ endif
 upload: hex
 	@echo "Uploading $(TARGET).hex to $(DEVICE) using $(PROGRMR) ..."
 ifeq ($(PROGRMR),serialupdi)
-	@$(PYPROG) -f $(TARGET).hex -a write
+	@$(PYPROG) -f $(TARGET).hex write
 else
 	@$(AVRDUDE) -U flash:w:$(TARGET).hex:i
 endif
@@ -83,7 +83,7 @@ endif
 fuses:
 	@echo "Burning fuses of $(DEVICE) ..."
 ifeq ($(PROGRMR),serialupdi)
-	@$(PYPROG) --fuses 0:$(FUSE0) 1:$(FUSE1) 2:$(FUSE2) 4:$(FUSE4) 5:$(FUSE5) 6:$(FUSE6) 7:$(FUSE7) 8:$(FUSE8) -a erase
+	@$(PYPROG) --fuses 0:$(FUSE0) 1:$(FUSE1) 2:$(FUSE2) 4:$(FUSE4) 5:$(FUSE5) 6:$(FUSE6) 7:$(FUSE7) 8:$(FUSE8) erase
 else
 	@$(AVRDUDE) -e -Ufuse0:w:$(FUSE0):m -Ufuse1:w:$(FUSE1):m -Ufuse2:w:$(FUSE2):m -Ufuse4:w:$(FUSE4):m -Ufuse5:w:$(FUSE5):m -Ufuse6:w:$(FUSE6):m -Ufuse7:w:$(FUSE7):m -Ufuse8:w:$(FUSE8):m
 endif
