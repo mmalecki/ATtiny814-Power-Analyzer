@@ -8,8 +8,8 @@
 # ===================================================================================
 
 # Input and Output File Names
-SKETCH   = PowerAnalyzer.ino
-TARGET   = poweranalyzer
+SRCS   = poweranalyzer.c
+TARGET = poweranalyzer
 
 # Microcontroller Settings
 DEVICE  ?= attiny814
@@ -94,8 +94,8 @@ clean:
 	@rm -f $(TARGET).elf $(TARGET).bin $(TARGET).hex $(TARGET).asm
 
 buildelf:
-	@echo "Compiling $(SKETCH) for $(DEVICE) @ $(CLOCK)Hz ..."
-	@$(CC) $(CFLAGS) $(SKETCH) -o $(TARGET).elf
+	@echo "Compiling $(SRCS) for $(DEVICE) @ $(CLOCK)Hz ..."
+	@$(CC) $(CFLAGS) $(SRCS) -o $(TARGET).elf
 
 buildbin:
 	@echo "Building $(TARGET).bin ..."
