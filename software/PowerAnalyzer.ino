@@ -200,7 +200,7 @@
 // Identifiers
 #define VERSION     "1.1"               // version number sent via serial if requested
 #define IDENT       "Power Analyzer"    // identifier sent via serial if requested
-#define SEPERATOR   "\t"                // seperator string for serial communication
+#define SEPARATOR   '\t'                // seperator string for serial communication
 #define DONE        "DONE"              // string sent when operation has finished
 
 // Calibration values
@@ -543,10 +543,11 @@ void updateSensors(void) {
 // Read sensor values and transmit them via serial interface
 void transmitSensors(void) {
   updateSensors();
-  UART_printInt(current1); UART_print(SEPERATOR);
-  UART_printInt(voltage1); UART_print(SEPERATOR);
-  UART_printInt(current2); UART_print(SEPERATOR);
-  UART_printInt(voltage2); UART_println("");
+  UART_printInt(current1); UART_write(SEPARATOR);
+  UART_printInt(voltage1); UART_write(SEPARATOR);
+  UART_printInt(current2); UART_write(SEPARATOR);
+  UART_printInt(voltage2);
+  UART_println("");
 }
 
 // ===================================================================================
@@ -593,8 +594,8 @@ void loadTest(void) {
     DAC0.DATA = DACvalue;                         // set load for next measurement
 
     // Transmit values via serial interface
-    UART_printInt(current1);  UART_print(SEPERATOR);
-    UART_printInt(voltage1);  UART_print(SEPERATOR);
+    UART_printInt(current1);  UART_write(SEPARATOR);
+    UART_printInt(voltage1);  UART_write(SEPARATOR);
     UART_printInt(loadpower); UART_println("");
     
     _delay_ms(SETTLE);                            // give everything a little time to settle
@@ -652,8 +653,8 @@ void efficiencyTest(void) {
     efficiency  = (float)loadpower * 1000 / supplypower + 0.5;
 
     // Transmit values via serial interface
-    UART_printInt(current1);   UART_print(SEPERATOR);
-    UART_printInt(voltage1);   UART_print(SEPERATOR);
+    UART_printInt(current1);   UART_write(SEPARATOR);
+    UART_printInt(voltage1);   UART_write(SEPARATOR);
     UART_printInt(efficiency); UART_println("");
     
     _delay_ms(SETTLE);                            // give everything a little time to settle
@@ -689,7 +690,7 @@ void rippleTest(void) {
     DAC0.DATA = DACvalue;                         // set load for next measurement
 
     // Transmit values via serial interface
-    UART_printInt(current1); UART_print(SEPERATOR);
+    UART_printInt(current1); UART_write(SEPARATOR);
     UART_printInt(maxvoltage - minvoltage); UART_println("");
     _delay_ms(SETTLE);                            // give everything a little time to settle
   } 
@@ -711,16 +712,16 @@ void batteryTest(void) {
   while(DAC0.DATA) {                              // repeat until load is zero
     updateLoadSensors();                          // read all load sensor values
     if(loadpower > MAXPOWER) break;               // stop when power reaches maximum
-    if(loadtemp  > MAXTEMP)  break;               // stop when heatsink is to hot
+    if(loadtemp  > MAXTEMP)  overheat(); break;               // stop when heatsink is to hot
     if(CMD_isTerminated()) break;                 // stop if termination command was sent
 
     // Decrease load if voltage drops below minloadvoltage
     if(voltage1 < minloadvoltage) DAC0.DATA--;
 
     // Transmit values via serial interface
-    UART_printInt((MIL_read() - startmillis) / 1000); UART_print(SEPERATOR);
-    UART_printInt(current1); UART_print(SEPERATOR);
-    UART_printInt(voltage1); UART_print(SEPERATOR);
+    UART_printInt((MIL_read() - startmillis) / 1000); UART_write(SEPARATOR);
+    UART_printInt(current1); UART_write(SEPARATOR);
+    UART_printInt(voltage1); UART_write(SEPARATOR);
     UART_printInt(capacity / 3600); UART_println("");
     
     while(MIL_read() < nextmillis);               // wait for the next cycle (one cycle/second)
@@ -743,8 +744,8 @@ void multimeter(void) {
   while(MIL_read() <= endmillis) {
     if(CMD_isTerminated()) break;                 // stop if termination command was sent
     updatePowerSensors();                         // read all power sensor values
-    UART_printInt(MIL_read() - startmillis); UART_print(SEPERATOR);
-    UART_printInt(current2); UART_print(SEPERATOR);
+    UART_printInt(MIL_read() - startmillis); UART_write(SEPARATOR);
+    UART_printInt(current2); UART_write(SEPARATOR);
     UART_printInt(voltage2); UART_println("");
     while(MIL_read() < nextmillis);               // wait for the next cycle
     nextmillis += interval;                       // set end time for next cycle
@@ -774,9 +775,9 @@ void calibrateLoad(void) {
     counter++;
     
     // Transmit averaged values via serial interface
-    UART_printInt(currents1 / counter); UART_print(SEPERATOR);
-    UART_printInt(voltages1 / counter); UART_print(SEPERATOR);
-    UART_printInt(currents2 / counter); UART_print(SEPERATOR);
+    UART_printInt(currents1 / counter); UART_write(SEPARATOR);
+    UART_printInt(voltages1 / counter); UART_write(SEPARATOR);
+    UART_printInt(currents2 / counter); UART_write(SEPARATOR);
     UART_printInt(voltages2 / counter); UART_println("");
 
     _delay_ms(100);
