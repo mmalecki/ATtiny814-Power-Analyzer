@@ -187,6 +187,7 @@
 #include <avr/interrupt.h>              // for interrupts
 #include <util/delay.h>                 // for delays
 #include <string.h>
+#include <math.h>
 
 // Pin definitions
 #define FAN_PIN     PA4                 // pin the fan is connected to
@@ -200,6 +201,7 @@
 
 // Identifiers
 #define VERSION     "1.1"               // version number sent via serial if requested
+#define TEMPERROR   "TEMPERROR"
 #define IDENT       "Power Analyzer"    // identifier sent via serial if requested
 #define SEPARATOR   '\t'                // seperator string for serial communication
 #define DONE        "DONE"              // string sent when operation has finished
@@ -217,6 +219,17 @@
 #define MAXTEMP     820                 // max ADC-value of NTC_PIN -> turn off load
 #define FANONTEMP   585                 // ADC-value of NTC_PIN to turn fan on
 #define FANOFFTEMP  540                 // ADC-value of NTC_PIN to turn fan off
+
+#define _K 273.15
+#define C_TO_K(X) (X + 273.15)
+#define K_TO_C(X) (X - 273.15)
+
+#define NTC_BETA    3977.0
+#define NTC_R0      10000.0
+#define NTC_T0      C_TO_K(25.0) // reference temperature [K]
+#define NTC_DIV_R1  10000.0
+#define ADC_MAX     1023.0
+
 #define SETTLE      25                  // settle time in ms
 
 #define BLINK_SHORT_INFO  250
@@ -270,7 +283,7 @@ char     cmd;
 // ===================================================================================
 
 // UART definitions and macros
-#define UART_BAUD         115200
+#define UART_BAUD         9600
 #define UART_BAUD_RATE    ((float)(F_CPU * 64 / (16 * (float)UART_BAUD)) + 0.5)
 #define UART_ready()      (USART0.STATUS & USART_DREIF_bm)
 
@@ -422,7 +435,6 @@ uint8_t I2C_read(uint8_t ack) {
 // ===================================================================================
 // INA219 Implementation
 // ===================================================================================
-
 // Writes  register value to the INA219
 void INA_write(uint8_t addr, uint8_t reg, uint16_t value) {
   I2C_start(addr);
@@ -594,6 +606,15 @@ void transmitSensors(void) {
   UART_println("");
 }
 
+void transmitTemperature(void) {
+  updateSensors();
+  double r = NTC_DIV_R1 * ((ADC_MAX / loadtemp) - 1);
+  double temp = 1 / ((1 / NTC_T0) + (log(r / NTC_R0) / NTC_BETA));
+  UART_printInt((int) round(K_TO_C(temp))); UART_write(SEPARATOR);
+  UART_printInt(loadtemp); UART_write(SEPARATOR);
+  UART_println("");
+}
+
 // ===================================================================================
 // Command Buffer Parser
 // ===================================================================================
@@ -620,6 +641,12 @@ uint8_t CMD_isTerminated(void) {
 // ===================================================================================
 // Test Algorithms
 // ===================================================================================
+
+
+void overheat() {
+  ledError();
+  UART_println(TEMPERROR);
+}
 
 // Perform automatic load test according to minimum load voltage and maximum load current
 void loadTest(void) {
@@ -756,7 +783,7 @@ void batteryTest(void) {
   while(DAC0.DATA) {                              // repeat until load is zero
     updateLoadSensors();                          // read all load sensor values
     if(loadpower > MAXPOWER) break;               // stop when power reaches maximum
-    if(loadtemp  > MAXTEMP)  overheat(); break;               // stop when heatsink is to hot
+    if(loadtemp  > MAXTEMP)  break;               // stop when heatsink is to hot
     if(CMD_isTerminated()) break;                 // stop if termination command was sent
 
     // Decrease load if voltage drops below minloadvoltage
@@ -807,7 +834,7 @@ void calibrateLoad(void) {
   uint16_t loadcurrent = argument1;               // argument1 is the constant load current
   
   DAC_setLoad(loadcurrent);                       // set the constant load current
-  _delay_ms(10);                                  // a little settle time
+  _delay_ms(SETTLE);                              // a little settle time
   uint32_t endmillis = MIL_read() + (uint32_t)1000 * argument2;  // start the timer
   while(MIL_read() < endmillis) {
     updateSensors();                              // read all sensor values
@@ -877,7 +904,8 @@ int main(void) {
                   UART_println(DONE);    break;
       case 's':   DAC_setLoad(argument1);         // set load current
                   UART_println(DONE);    break; 
-      default:    break;    
+      case 'p':   transmitTemperature(); break;   // transmit NTC temp
+      default:    ledError(); CMD_ptr = 0; break;
     }
     ledReady();
   }
