@@ -218,6 +218,10 @@
 #define FANOFFTEMP  540                 // ADC-value of NTC_PIN to turn fan off
 #define SETTLE      25                  // settle time in ms
 
+#define BLINK_SHORT_INFO  250
+#define BLINK_INFO        500
+#define BLINK_ERROR       1500
+
 // INA219 register values
 #define INA1ADDR    0b10000000          // I2C write address of INA on the load side 
 #define INA2ADDR    0b10000010          // I2C write address of INA on the power side
@@ -244,6 +248,15 @@ enum {PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PB0, PB1, PB2, PB3};    // enumera
 #define pinDisable(x)     (&PORTA.PIN0CTRL)[(((x)&8)<<2)+((x)&7)] |= PORT_ISC_INPUT_DISABLE_gc
 #define pinPullup(x)      (&PORTA.PIN0CTRL)[(((x)&8)<<2)+((x)&7)] |= PORT_PULLUPEN_bm
 #define pinAIN(x)         ((x)<8 ? (x) : (19-(x)))                    // convert pin to ADC port
+
+#define ledBlink(INTERVAL) ledToggle(); \
+                           _delay_ms(INTERVAL); \
+                           ledToggle(); \
+                           _delay_ms(INTERVAL);
+
+#define ledBusy() pinHigh(LED_PIN)
+#define ledReady() pinLow(LED_PIN)
+#define ledToggle() pinToggle(LED_PIN)
 
 // Global variables (voltages in mV, currents in mA, power in mW, shunts in 0.01 mV)
 uint16_t voltage1, current1, voltage2, current2, shunt1, shunt2, power2, loadtemp;
@@ -794,6 +807,8 @@ int main(void) {
   // Setup MCU
   _PROTECTED_WRITE(CLKCTRL.MCLKCTRLB, 0);         // set clock frequency to 20 MHz
 
+  ledBusy();
+
   // Setup modules
   UART_init();                                    // init UART
   I2C_init();                                     // init I2C
@@ -808,10 +823,14 @@ int main(void) {
   pinOutput(LED_PIN);                             // set LED pin as output
   pinDisable(NTC_PIN);                            // disable digital input buffer
 
+  // This delay not necessary, but the reassuring transition isn't visible otherwise:
+  _delay_ms(BLINK_INFO);
+  ledReady();
+
   // Loop
   while(1) {
     CMD_read();                                   // wait for and read command
-    pinHigh(LED_PIN);                             // set BUSY LED
+    ledBusy();
     switch(cmd) {
       case 'i':   UART_println(IDENT);   break;   // send identification
       case 'v':   UART_println(VERSION); break;   // send version number
@@ -829,6 +848,6 @@ int main(void) {
                   UART_println(DONE);    break; 
       default:    break;    
     }
-    pinLow(LED_PIN);                              // set READY LED
+    ledReady();
   }
 }
