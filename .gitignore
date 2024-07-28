@@ -29,3 +29,9 @@ fp-info-cache
 *.csv
 
 hardware/out
+
+# Built software files
+software/*.asm
+software/*.bin
+software/*.elf
+software/*.hex
