@@ -103,7 +103,7 @@ buildbin:
 
 buildhex:
 	@echo "Building $(TARGET).hex ..."
-	@$(OBJCOPY) -j .text -j .data -O ihex $(TARGET).elf $(TARGET).hex
+	@$(OBJCOPY) -j .text -j .data -j .rodata -O ihex $(TARGET).elf $(TARGET).hex
 
 buildasm:
 	@echo "Disassembling to $(TARGET).asm ..."
