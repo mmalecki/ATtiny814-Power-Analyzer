@@ -3562,6 +3562,483 @@
 				)
 			)
 		)
+		(symbol "Device:D"
+			(pin_numbers hide)
+			(pin_names
+				(offset 1.016) hide)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "D"
+				(at 0 2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "D"
+				(at 0 -2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Diode"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Sim.Device" "D"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Sim.Pins" "1=K 2=A"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "diode"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "TO-???* *_Diode_* *SingleDiode* D_*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "D_0_1"
+				(polyline
+					(pts
+						(xy -1.27 1.27) (xy -1.27 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy -1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 1.27) (xy 1.27 -1.27) (xy -1.27 0) (xy 1.27 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "D_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "Device:D_Schottky"
+			(pin_numbers hide)
+			(pin_names
+				(offset 1.016) hide)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "D"
+				(at 0 2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "D_Schottky"
+				(at 0 -2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Schottky diode"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "diode Schottky"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "TO-???* *_Diode_* *SingleDiode* D_*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "D_Schottky_0_1"
+				(polyline
+					(pts
+						(xy 1.27 0) (xy -1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 1.27) (xy 1.27 -1.27) (xy -1.27 0) (xy 1.27 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.905 0.635) (xy -1.905 1.27) (xy -1.27 1.27) (xy -1.27 -1.27) (xy -0.635 -1.27) (xy -0.635 -0.635)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "D_Schottky_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "Device:LED"
+			(pin_numbers hide)
+			(pin_names
+				(offset 1.016) hide)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "D"
+				(at 0 2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "LED"
+				(at 0 -2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Light emitting diode"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "LED diode"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "LED* LED_SMD:* LED_THT:*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "LED_0_1"
+				(polyline
+					(pts
+						(xy -1.27 -1.27) (xy -1.27 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy 1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -1.27) (xy 1.27 1.27) (xy -1.27 0) (xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -3.048 -0.762) (xy -4.572 -2.286) (xy -3.81 -2.286) (xy -4.572 -2.286) (xy -4.572 -1.524)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.778 -0.762) (xy -3.302 -2.286) (xy -2.54 -2.286) (xy -3.302 -2.286) (xy -3.302 -1.524)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "LED_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
 		(symbol "Device:R"
 			(pin_numbers hide)
 			(pin_names
@@ -7692,156 +8169,6 @@
 				)
 			)
 		)
-		(symbol "SS54_C123946"
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "D1"
-				(at -1.4986 6.7691 0)
-				(effects
-					(font
-						(face "Arial")
-						(size 1.6891 1.6891)
-					)
-					(justify left top)
-				)
-			)
-			(property "Value" "SS54"
-				(at -1.4986 4.4831 0)
-				(effects
-					(font
-						(face "Arial")
-						(size 1.6891 1.6891)
-					)
-					(justify left top)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer Part" "SS54"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer" "Jingdao"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Supplier Part" "C123946"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Supplier" "LCSC"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "SS54_C123946_0_0"
-				(polyline
-					(pts
-						(xy -1.27 -1.524) (xy 1.27 0) (xy -1.27 1.778) (xy -1.27 -1.524)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type outline)
-					)
-				)
-				(polyline
-					(pts
-						(xy 2.032 -1.524) (xy 2.032 -1.778) (xy 1.524 -1.778) (xy 1.524 2.032) (xy 1.016 2.032) (xy 1.016 1.778)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(pin unspecified line
-					(at -5.08 0 0)
-					(length 3.81)
-					(name "A"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-				)
-				(pin unspecified line
-					(at 5.08 0 180)
-					(length 3.81)
-					(name "K"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-				)
-			)
-		)
 		(symbol "UMK107AB7105KA-T"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -8162,402 +8489,6 @@
 						)
 					)
 					(number "3"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-				)
-			)
-		)
-		(symbol "Unknown_155_-205"
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "BUSY"
-				(at -1.6764 -4.1783 0)
-				(effects
-					(font
-						(face "Arial")
-						(size 1.6891 1.6891)
-					)
-					(justify left top)
-				)
-			)
-			(property "Value" "LED"
-				(at -1.524 -6.7183 0)
-				(effects
-					(font
-						(face "Arial")
-						(size 1.6891 1.6891)
-					)
-					(justify left top)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer Part" "19-217/BHC-ZL1M2RY/3T"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer" "EVERLIGHT"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Supplier Part" "C72041"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Supplier" "LCSC"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "Unknown_155_-205_0_0"
-				(polyline
-					(pts
-						(xy 0.254 2.286) (xy 2.032 4.064)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 1.27 -3.048) (xy 1.27 0.508)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 1.27 1.27) (xy 3.048 3.048)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -1.27 -2.794) (xy 1.27 -1.27) (xy -1.27 0.508) (xy -1.27 -2.794)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 2.032 4.064) (xy 1.016 3.556) (xy 1.524 3.048) (xy 2.032 4.064)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 3.048 3.048) (xy 2.032 2.54) (xy 2.54 2.032) (xy 3.048 3.048)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(pin unspecified line
-					(at -5.08 -1.27 0)
-					(length 3.81)
-					(name "+"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-				)
-				(pin unspecified line
-					(at 5.08 -1.27 180)
-					(length 3.81)
-					(name "-"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-				)
-			)
-		)
-		(symbol "Unknown_155_-295"
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "PWR"
-				(at -2.8956 -3.6703 0)
-				(effects
-					(font
-						(face "Arial")
-						(size 1.6891 1.6891)
-					)
-					(justify left top)
-				)
-			)
-			(property "Value" "LED"
-				(at -2.794 -6.2103 0)
-				(effects
-					(font
-						(face "Arial")
-						(size 1.6891 1.6891)
-					)
-					(justify left top)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer Part" "19-217/BHC-ZL1M2RY/3T"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer" "EVERLIGHT"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Supplier Part" "C72041"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Supplier" "LCSC"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "Unknown_155_-295_0_0"
-				(polyline
-					(pts
-						(xy 0.254 2.286) (xy 2.032 4.064)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 1.27 -3.048) (xy 1.27 0.508)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 1.27 1.27) (xy 3.048 3.048)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -1.27 -2.794) (xy 1.27 -1.27) (xy -1.27 0.508) (xy -1.27 -2.794)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 2.032 4.064) (xy 1.016 3.556) (xy 1.524 3.048) (xy 2.032 4.064)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 3.048 3.048) (xy 2.032 2.54) (xy 2.54 2.032) (xy 3.048 3.048)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(pin unspecified line
-					(at -5.08 -1.27 0)
-					(length 3.81)
-					(name "+"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-				)
-				(pin unspecified line
-					(at 5.08 -1.27 180)
-					(length 3.81)
-					(name "-"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-					(number "2"
 						(effects
 							(font
 								(size 0.0254 0.0254)
@@ -9416,156 +9347,6 @@
 				)
 			)
 		)
-		(symbol "Unknown_365_-270"
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "D2"
-				(at 2.286 0.8509 0)
-				(effects
-					(font
-						(face "Arial")
-						(size 1.6891 1.6891)
-					)
-					(justify left top)
-				)
-			)
-			(property "Value" "1N4148W"
-				(at 2.286 -1.3843 0)
-				(effects
-					(font
-						(face "Arial")
-						(size 1.6891 1.6891)
-					)
-					(justify left top)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer Part" "1N4148W-E3-08"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer" "Vishay Intertech"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Supplier Part" "C241939"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Supplier" "LCSC"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "Unknown_365_-270_0_0"
-				(polyline
-					(pts
-						(xy 1.778 1.524) (xy -2.032 1.524)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 1.524 -1.27) (xy 0 1.27) (xy -1.778 -1.27) (xy 1.524 -1.27)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type outline)
-					)
-				)
-				(pin unspecified line
-					(at 0 -5.08 90)
-					(length 3.81)
-					(name "A"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-				)
-				(pin unspecified line
-					(at 0 5.08 270)
-					(length 3.81)
-					(name "K"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-				)
-			)
-		)
 		(symbol "Unknown_485_-100"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -9798,204 +9579,6 @@
 					(at -2.54 -8.89 0)
 					(length 2.54)
 					(name "2"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-				)
-			)
-		)
-		(symbol "Unknown_95_-265"
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "RDY"
-				(at -8.89 2.1463 0)
-				(effects
-					(font
-						(face "Arial")
-						(size 1.6891 1.6891)
-					)
-					(justify left top)
-				)
-			)
-			(property "Value" "LED"
-				(at -8.636 -0.3683 0)
-				(effects
-					(font
-						(face "Arial")
-						(size 1.6891 1.6891)
-					)
-					(justify left top)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer Part" "19-217/BHC-ZL1M2RY/3T"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer" "EVERLIGHT"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Supplier Part" "C72041"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Supplier" "LCSC"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "Unknown_95_-265_0_0"
-				(polyline
-					(pts
-						(xy -3.048 -1.27) (xy 0.508 -1.27)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 1.27 -1.27) (xy 3.048 -3.048)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 2.286 -0.254) (xy 4.064 -2.032)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -2.794 1.27) (xy -1.27 -1.27) (xy 0.508 1.27) (xy -2.794 1.27)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 3.048 -3.048) (xy 2.54 -2.032) (xy 2.032 -2.54) (xy 3.048 -3.048)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 4.064 -2.032) (xy 3.556 -1.016) (xy 3.048 -1.524) (xy 4.064 -2.032)
-					)
-					(stroke
-						(width 0.254)
-						(type solid)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(pin unspecified line
-					(at -1.27 5.08 270)
-					(length 3.81)
-					(name "+"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 0.0254 0.0254)
-							)
-						)
-					)
-				)
-				(pin unspecified line
-					(at -1.27 -5.08 90)
-					(length 3.81)
-					(name "-"
 						(effects
 							(font
 								(size 0.0254 0.0254)
@@ -10559,6 +10142,16 @@
 	)
 	(wire
 		(pts
+			(xy 92.71 140.97) (xy 92.71 144.78)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "13157987-e336-4e0b-8ab7-5abddc30c8d9")
+	)
+	(wire
+		(pts
 			(xy 41.91 74.93) (xy 41.91 81.28)
 		)
 		(stroke
@@ -10699,16 +10292,6 @@
 	)
 	(wire
 		(pts
-			(xy 44.45 143.51) (xy 45.72 143.51)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "1f86871a-1bf0-4629-9eb3-c97fd6fb109a")
-	)
-	(wire
-		(pts
 			(xy 215.9 82.55) (xy 215.9 85.09)
 		)
 		(stroke
@@ -10826,6 +10409,16 @@
 			(type default)
 		)
 		(uuid "2cfabd31-4f9b-46f5-a504-e814a1295648")
+	)
+	(wire
+		(pts
+			(xy 34.29 143.51) (xy 35.56 143.51)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2ea1e725-63f9-472c-8d28-285a1c40edc0")
 	)
 	(wire
 		(pts
@@ -10959,6 +10552,16 @@
 	)
 	(wire
 		(pts
+			(xy 34.29 166.37) (xy 35.56 166.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4f41fb52-ecb2-468b-9fb1-d892e466d887")
+	)
+	(wire
+		(pts
 			(xy 161.29 96.52) (xy 161.29 104.14)
 		)
 		(stroke
@@ -10976,6 +10579,16 @@
 			(type default)
 		)
 		(uuid "4fd7e496-ae83-40a9-9565-742f90c40faa")
+	)
+	(wire
+		(pts
+			(xy 92.71 152.4) (xy 92.71 156.21)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "54e5f55a-079f-475d-853a-c61ead3166a9")
 	)
 	(wire
 		(pts
@@ -11009,7 +10622,7 @@
 	)
 	(wire
 		(pts
-			(xy 22.86 144.78) (xy 22.86 143.51)
+			(xy 22.86 143.51) (xy 22.86 146.05)
 		)
 		(stroke
 			(width 0)
@@ -11859,6 +11472,16 @@
 	)
 	(wire
 		(pts
+			(xy 43.18 143.51) (xy 45.72 143.51)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b6d6cef4-3e5b-4045-8dfb-32258b80980c")
+	)
+	(wire
+		(pts
 			(xy 215.9 85.09) (xy 229.87 85.09)
 		)
 		(stroke
@@ -11866,16 +11489,6 @@
 			(type default)
 		)
 		(uuid "b8b6e403-656c-47a7-b46f-410e60faa7aa")
-	)
-	(wire
-		(pts
-			(xy 92.71 140.97) (xy 92.71 143.51)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "bb33b2fb-5aa3-4b93-a7b5-377e07e91e78")
 	)
 	(wire
 		(pts
@@ -12039,16 +11652,6 @@
 	)
 	(wire
 		(pts
-			(xy 44.45 166.37) (xy 45.72 166.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cec09d1e-f63e-483f-83fb-2e31d3697957")
-	)
-	(wire
-		(pts
 			(xy 22.86 165.1) (xy 22.86 166.37)
 		)
 		(stroke
@@ -12106,26 +11709,6 @@
 			(type default)
 		)
 		(uuid "d45a6c31-d505-4c4e-af15-638883453968")
-	)
-	(wire
-		(pts
-			(xy 92.71 153.67) (xy 92.71 156.21)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d507ebc9-9bbc-4e3a-8de5-976c7202754c")
-	)
-	(wire
-		(pts
-			(xy 154.94 16.51) (xy 157.48 16.51)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "da441425-444b-4fb7-9b1e-5404837cd01e")
 	)
 	(wire
 		(pts
@@ -12259,7 +11842,7 @@
 	)
 	(wire
 		(pts
-			(xy 129.54 16.51) (xy 144.78 16.51)
+			(xy 129.54 16.51) (xy 146.05 16.51)
 		)
 		(stroke
 			(width 0)
@@ -12296,6 +11879,16 @@
 			(type default)
 		)
 		(uuid "ec52cb65-ddb3-4aa0-a94c-873ac5346526")
+	)
+	(wire
+		(pts
+			(xy 43.18 166.37) (xy 45.72 166.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ed75a762-3bc8-4067-bc64-c4d415a9c6d3")
 	)
 	(wire
 		(pts
@@ -12359,6 +11952,16 @@
 	)
 	(wire
 		(pts
+			(xy 22.86 153.67) (xy 22.86 154.94)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f6cd6689-eafe-442c-b2a5-5b52eec5cca3")
+	)
+	(wire
+		(pts
 			(xy 256.54 59.69) (xy 255.27 59.69)
 		)
 		(stroke
@@ -12416,6 +12019,16 @@
 			(type default)
 		)
 		(uuid "fd38ae32-1d0e-4a05-92da-d207132ad470")
+	)
+	(wire
+		(pts
+			(xy 153.67 16.51) (xy 157.48 16.51)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fdc51c97-e4b6-4493-ba85-7b54fb182869")
 	)
 	(wire
 		(pts
@@ -15684,8 +15297,9 @@
 		)
 	)
 	(symbol
-		(lib_id "Unknown_155_-295")
-		(at 39.37 142.24 0)
+		(lib_id "Device:LED")
+		(at 39.37 143.51 0)
+		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -15693,7 +15307,7 @@
 		(dnp no)
 		(uuid "2ce9349a-16e5-48c8-9fcc-233b78852902")
 		(property "Reference" "D3"
-			(at 36.4744 145.9103 0)
+			(at 42.2656 147.1803 0)
 			(effects
 				(font
 					(size 1.6891 1.6891)
@@ -15702,7 +15316,7 @@
 			)
 		)
 		(property "Value" "PWR"
-			(at 36.576 148.4503 0)
+			(at 42.164 149.7203 0)
 			(effects
 				(font
 					(size 1.6891 1.6891)
@@ -15711,7 +15325,7 @@
 			)
 		)
 		(property "Footprint" "LED_SMD:LED_0603_1608Metric"
-			(at 39.37 142.24 0)
+			(at 39.37 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15719,8 +15333,8 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" ""
-			(at 39.37 142.24 0)
+		(property "Datasheet" "~"
+			(at 39.37 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15728,8 +15342,8 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
-			(at 39.37 142.24 0)
+		(property "Description" "Light emitting diode"
+			(at 39.37 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15738,7 +15352,7 @@
 			)
 		)
 		(property "Manufacturer Part" "19-217/BHC-ZL1M2RY/3T"
-			(at 39.37 142.24 0)
+			(at 39.37 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15747,7 +15361,7 @@
 			)
 		)
 		(property "Manufacturer" "EVERLIGHT"
-			(at 39.37 142.24 0)
+			(at 39.37 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15756,7 +15370,7 @@
 			)
 		)
 		(property "Supplier Part" "C72041"
-			(at 39.37 142.24 0)
+			(at 39.37 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15765,7 +15379,7 @@
 			)
 		)
 		(property "Supplier" "LCSC"
-			(at 39.37 142.24 0)
+			(at 39.37 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17580,8 +17194,9 @@
 		)
 	)
 	(symbol
-		(lib_id "SS54_C123946")
+		(lib_id "Device:D_Schottky")
 		(at 149.86 16.51 0)
+		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -17589,7 +17204,7 @@
 		(dnp no)
 		(uuid "6307701e-4085-455a-8cb9-3fddad6a2dde")
 		(property "Reference" "D2"
-			(at 148.3614 9.7409 0)
+			(at 151.3586 9.7409 0)
 			(effects
 				(font
 					(size 1.6891 1.6891)
@@ -17598,7 +17213,7 @@
 			)
 		)
 		(property "Value" "SS54"
-			(at 148.3614 12.0269 0)
+			(at 151.3586 12.0269 0)
 			(effects
 				(font
 					(size 1.6891 1.6891)
@@ -17615,7 +17230,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "~"
 			(at 149.86 16.51 0)
 			(effects
 				(font
@@ -17624,7 +17239,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Schottky diode"
 			(at 149.86 16.51 0)
 			(effects
 				(font
@@ -18302,30 +17917,31 @@
 		)
 	)
 	(symbol
-		(lib_id "Unknown_365_-270")
-		(at 92.71 148.59 0)
+		(lib_id "Device:D")
+		(at 92.71 148.59 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
+		(fields_autoplaced yes)
 		(uuid "77a26dd8-68f1-4634-9f56-aba30576145f")
 		(property "Reference" "D1"
-			(at 94.996 147.7391 0)
+			(at 95.25 146.6849 90)
 			(effects
 				(font
 					(size 1.6891 1.6891)
 				)
-				(justify left top)
+				(justify left)
 			)
 		)
 		(property "Value" "1N4148W"
-			(at 94.996 149.9743 0)
+			(at 95.25 150.4949 90)
 			(effects
 				(font
 					(size 1.6891 1.6891)
 				)
-				(justify left top)
+				(justify left)
 			)
 		)
 		(property "Footprint" "Diode_SMD:D_SOD-123"
@@ -18337,7 +17953,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "~"
 			(at 92.71 148.59 0)
 			(effects
 				(font
@@ -18346,7 +17962,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Diode"
 			(at 92.71 148.59 0)
 			(effects
 				(font
@@ -18383,6 +17999,24 @@
 			)
 		)
 		(property "Supplier" "LCSC"
+			(at 92.71 148.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Device" "D"
+			(at 92.71 148.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Pins" "1=K 2=A"
 			(at 92.71 148.59 0)
 			(effects
 				(font
@@ -18635,8 +18269,8 @@
 		)
 	)
 	(symbol
-		(lib_id "Unknown_155_-205")
-		(at 39.37 165.1 0)
+		(lib_id "Device:LED")
+		(at 39.37 166.37 180)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -18644,7 +18278,7 @@
 		(dnp no)
 		(uuid "7d5e938c-5e0a-4972-94a8-5d53aeffdd79")
 		(property "Reference" "D5"
-			(at 37.6936 169.2783 0)
+			(at 41.0464 162.1917 0)
 			(effects
 				(font
 					(size 1.6891 1.6891)
@@ -18653,7 +18287,7 @@
 			)
 		)
 		(property "Value" "BUSY"
-			(at 37.846 171.8183 0)
+			(at 40.894 159.6517 0)
 			(effects
 				(font
 					(size 1.6891 1.6891)
@@ -18662,7 +18296,7 @@
 			)
 		)
 		(property "Footprint" "LED_SMD:LED_0603_1608Metric"
-			(at 39.37 165.1 0)
+			(at 39.37 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18670,8 +18304,8 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" ""
-			(at 39.37 165.1 0)
+		(property "Datasheet" "~"
+			(at 39.37 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18679,8 +18313,8 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
-			(at 39.37 165.1 0)
+		(property "Description" "Light emitting diode"
+			(at 39.37 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18689,7 +18323,7 @@
 			)
 		)
 		(property "Manufacturer Part" "19-217/BHC-ZL1M2RY/3T"
-			(at 39.37 165.1 0)
+			(at 39.37 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18698,7 +18332,7 @@
 			)
 		)
 		(property "Manufacturer" "EVERLIGHT"
-			(at 39.37 165.1 0)
+			(at 39.37 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18707,7 +18341,7 @@
 			)
 		)
 		(property "Supplier Part" "C72041"
-			(at 39.37 165.1 0)
+			(at 39.37 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18716,7 +18350,7 @@
 			)
 		)
 		(property "Supplier" "LCSC"
-			(at 39.37 165.1 0)
+			(at 39.37 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19613,8 +19247,8 @@
 		)
 	)
 	(symbol
-		(lib_id "Unknown_95_-265")
-		(at 24.13 149.86 0)
+		(lib_id "Device:LED")
+		(at 22.86 149.86 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -19622,7 +19256,7 @@
 		(dnp no)
 		(uuid "94149cf3-4c65-48d6-bb41-96fba64a783d")
 		(property "Reference" "D4"
-			(at 15.24 147.7137 0)
+			(at 20.7137 158.75 0)
 			(effects
 				(font
 					(size 1.6891 1.6891)
@@ -19631,7 +19265,7 @@
 			)
 		)
 		(property "Value" "RDY"
-			(at 15.494 150.2283 0)
+			(at 23.2283 158.496 0)
 			(effects
 				(font
 					(size 1.6891 1.6891)
@@ -19640,7 +19274,7 @@
 			)
 		)
 		(property "Footprint" "LED_SMD:LED_0603_1608Metric"
-			(at 24.13 149.86 0)
+			(at 22.86 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19648,8 +19282,8 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" ""
-			(at 24.13 149.86 0)
+		(property "Datasheet" "~"
+			(at 22.86 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19657,8 +19291,8 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
-			(at 24.13 149.86 0)
+		(property "Description" "Light emitting diode"
+			(at 22.86 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19667,7 +19301,7 @@
 			)
 		)
 		(property "Manufacturer Part" "19-217/BHC-ZL1M2RY/3T"
-			(at 24.13 149.86 0)
+			(at 22.86 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19676,7 +19310,7 @@
 			)
 		)
 		(property "Manufacturer" "EVERLIGHT"
-			(at 24.13 149.86 0)
+			(at 22.86 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19685,7 +19319,7 @@
 			)
 		)
 		(property "Supplier Part" "C72041"
-			(at 24.13 149.86 0)
+			(at 22.86 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19694,7 +19328,7 @@
 			)
 		)
 		(property "Supplier" "LCSC"
-			(at 24.13 149.86 0)
+			(at 22.86 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
