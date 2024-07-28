@@ -186,6 +186,7 @@
 #include <avr/io.h>                     // for GPIO
 #include <avr/interrupt.h>              // for interrupts
 #include <util/delay.h>                 // for delays
+#include <string.h>
 
 // Pin definitions
 #define FAN_PIN     PA4                 // pin the fan is connected to
@@ -270,11 +271,15 @@ char     cmd;
 
 // UART definitions and macros
 #define UART_BAUD         115200
-#define UART_BAUD_RATE    4.0 * F_CPU / UART_BAUD + 0.5
+#define UART_BAUD_RATE    ((float)(F_CPU * 64 / (16 * (float)UART_BAUD)) + 0.5)
 #define UART_ready()      (USART0.STATUS & USART_DREIF_bm)
+
+#define UART_LOOPBACK
+#undef UART_DEBUG
 
 // UART init
 void UART_init(void) {
+  pinInput(RXD_PIN);                              // set RX pin as input
   pinOutput(TXD_PIN);                             // set TX pin as output
   USART0.BAUD   = UART_BAUD_RATE;                 // set BAUD
   USART0.CTRLA  = USART_RXCIE_bm;                 // enable RX interrupt
@@ -283,7 +288,7 @@ void UART_init(void) {
 }
 
 // UART transmit data byte
-void UART_write(uint8_t data) {
+void UART_write(char data) {
   while(!UART_ready());                           // wait until ready for next data
   USART0.TXDATAL = data;                          // send data byte
 }
@@ -294,12 +299,13 @@ void UART_write(uint8_t data) {
 
 // UART print string
 void UART_print(const char *str) {
-  while(*str) UART_write(*str++);                 // write characters of string
+  for (size_t i = 0; i < strlen(str); i++)  { UART_write(str[i]); }
 }
 
 // UART print string with new line
 void UART_println(const char *str) {
   UART_print(str);                                // print string
+  UART_write('\r');                               // send new line command
   UART_write('\n');                               // send new line command
 }
 
@@ -324,21 +330,46 @@ void UART_printInt(uint16_t value) {
 
 // UART command buffer and pointer
 #define CMD_BUF_LEN 16                            // command buffer length
-volatile uint8_t CMD_buffer[CMD_BUF_LEN];         // command buffer
+volatile uint8_t CMD_buffer[CMD_BUF_LEN] = { 0 };         // command buffer
 volatile uint8_t CMD_ptr = 0;                     // buffer pointer for writing
 volatile uint8_t CMD_compl = 0;                   // command completely received flag
+
+void ledError() {
+  ledBlink(BLINK_ERROR);
+  ledBlink(BLINK_ERROR);
+}
 
 // UART RXC interrupt service routine (read command via UART)
 ISR(USART0_RXC_vect) {
   uint8_t data = USART0.RXDATAL;                  // read received data byte
+
+#ifdef UART_DEBUG
+  // 1 blink for each character in the buffer:
+  for (int i = 0; i <= CMD_ptr; i++) ledBlink(BLINK_INFO);
+#endif
+
   if(!CMD_compl) {                                // command still incomplete?
-    if(data != '\n') {                            // not command end?
+    if(data != '\n' && data != '\r') {            // not command end?
+#ifdef UART_LOOPBACK
+      UART_write(data);
+#endif
+
       CMD_buffer[CMD_ptr] = data;                 // write received byte to buffer
       if(CMD_ptr < (CMD_BUF_LEN-1)) CMD_ptr++;    // increase and limit pointer
-    } else if(CMD_ptr) {                          // received at least one byte?
+    } else if(CMD_ptr > 0) {                      // received at least one byte?
+#ifdef UART_DEBUG
+      // 3 short blinks for end of command:
+      ledBlink(BLINK_SHORT_INFO);
+      ledBlink(BLINK_SHORT_INFO);
+      ledBlink(BLINK_SHORT_INFO);
+#endif
       CMD_compl = 1;                              // set command complete flag
       CMD_buffer[CMD_ptr] = 0;                    // write string terminator
       CMD_ptr = 0;                                // reset pointer
+#ifdef UART_LOOPBACK
+      UART_write('\r');
+      UART_write('\n');
+#endif
     }
   }  
 }
@@ -632,8 +663,8 @@ void regulationTest(void) {
       updateLoadSensors();                        // read all load sensor values
       if(loadpower > MAXPOWER) break;             // stop when power reaches maximum
       if(loadtemp  > MAXTEMP)  break;             // stop when heatsink is to hot
-      UART_printInt(MIL_read() - startmillis); UART_print(SEPERATOR);
-      UART_printInt(current1); UART_print(SEPERATOR);
+      UART_printInt(MIL_read() - startmillis); UART_write(SEPARATOR);
+      UART_printInt(current1); UART_write(SEPARATOR);
       UART_printInt(voltage1); UART_println("");
     }
     nextmillis += 100;
