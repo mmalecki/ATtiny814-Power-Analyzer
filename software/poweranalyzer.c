@@ -201,10 +201,10 @@
 
 // Identifiers
 #define VERSION     "1.1"               // version number sent via serial if requested
-#define TEMPERROR   "TEMPERROR"
 #define IDENT       "Power Analyzer"    // identifier sent via serial if requested
 #define SEPARATOR   '\t'                // seperator string for serial communication
 #define DONE        "DONE"              // string sent when operation has finished
+#define OVERLOAD    "OVERLOAD"
 
 // Calibration values
 #define ILCAL1      1                   // linear current calibration factor (load)
@@ -216,9 +216,9 @@
 #define MAXPOWER    25000               // maximum power of the load in mW -> turn off load
 #define FANONPOWER  700                 // power in mW to turn fan on
 #define FANOFFPOWER 500                 // power in mW to turn fan off
-#define MAXTEMP     820                 // max ADC-value of NTC_PIN -> turn off load
-#define FANONTEMP   585                 // ADC-value of NTC_PIN to turn fan on
-#define FANOFFTEMP  540                 // ADC-value of NTC_PIN to turn fan off
+#define MAXTEMP     85                  // max temperature
+#define FANONTEMP   50                  // fan-on temperature
+#define FANOFFTEMP  45                  // fan-off temperature
 
 #define _K 273.15
 #define C_TO_K(X) (X + 273.15)
@@ -234,7 +234,7 @@
 
 #define BLINK_SHORT_INFO  250
 #define BLINK_INFO        500
-#define BLINK_ERROR       1500
+#define BLINK_ERROR       1250
 
 // INA219 register values
 #define INA1ADDR    0b10000000          // I2C write address of INA on the load side 
@@ -272,11 +272,15 @@ enum {PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PB0, PB1, PB2, PB3};    // enumera
 #define ledReady() pinLow(LED_PIN)
 #define ledToggle() pinToggle(LED_PIN)
 
+typedef enum { FAN_AUTO, FAN_MANUAL } fan_control_t;
+
 // Global variables (voltages in mV, currents in mA, power in mW, shunts in 0.01 mV)
 uint16_t voltage1, current1, voltage2, current2, shunt1, shunt2, power2, loadtemp;
 uint16_t argument1, argument2;
 uint16_t loadpower = 0;
 char     cmd;
+
+fan_control_t fan_control = FAN_AUTO;
 
 // ===================================================================================
 // UART Implementation - Low Level Functions (8N1, no calibration, with RX-interrupt)
@@ -516,7 +520,7 @@ void DAC_setReference(uint16_t current) {
   DAC0.DATA   = 0;
   VREF_CTRLA &= 0xf8;
   VREF_CTRLA |= DACREF[DACreference];
-  _delay_us(25);
+  _delay_us(SETTLE);
 }
 
 // Set the DAC within the selected reference to the specified load current
@@ -562,8 +566,16 @@ uint16_t ADC_read(uint8_t port) {
 // Sensors Implementation
 // ===================================================================================
 
+void overload() {
+  DAC_resetLoad();
+  fan_control = FAN_AUTO;
+  pinHigh(FAN_PIN);
+  ledError();
+  UART_println(OVERLOAD);
+}
+
 // Read all sensors of the electronic load and set the fan
-void updateLoadSensors(void) { 
+uint8_t updateLoadSensors(void) {
   // Read values from INA on the load side
   shunt1   = INA_read(INA1ADDR, SHUNT_REG);
   if(shunt1 > 4095) shunt1 = 0;
@@ -574,12 +586,24 @@ void updateLoadSensors(void) {
 
   // Calculate load power and read temperature of the heatsink
   loadpower= ((uint32_t)voltage1 * current1 + 500) / 1000;
-  loadtemp = ADC_read(pinAIN(NTC_PIN));
 
-  // Turn fan on or off depending on load power and temperature
-  if((loadpower > MAXPOWER)    || (loadtemp > MAXTEMP))    DAC_resetLoad();
-  if((loadpower > FANONPOWER)  || (loadtemp > FANONTEMP))  pinHigh(FAN_PIN);
-  if((loadpower < FANOFFPOWER) && (loadtemp < FANOFFTEMP)) pinLow(FAN_PIN); 
+  uint16_t tempAdc = ADC_read(pinAIN(NTC_PIN));
+  float rT = NTC_DIV_R1 * ((ADC_MAX / tempAdc) - 1);
+  float temp = 1 / ((1 / NTC_T0) + (log(rT / NTC_R0) / NTC_BETA));
+  loadtemp = (uint16_t) round(K_TO_C(temp));
+
+  if((loadpower > MAXPOWER) || (loadtemp > MAXTEMP)) {
+    overload();
+    return 1;
+  }
+
+  if (fan_control == FAN_AUTO) {
+    // Turn fan on or off depending on load power and temperature
+    if((loadpower > FANONPOWER)  || (loadtemp > FANONTEMP))  pinHigh(FAN_PIN);
+    if((loadpower < FANOFFPOWER) && (loadtemp < FANOFFTEMP)) pinLow(FAN_PIN); 
+  }
+
+  return 0;
 }
 
 // Read voltage and current of PWR-IN/PWR-OUT
@@ -591,9 +615,9 @@ void updatePowerSensors(void) {
 }
 
 // Read all sensors and updates the corresponding variables
-void updateSensors(void) {
-  updateLoadSensors();
+uint8_t updateSensors(void) {
   updatePowerSensors();
+  return updateLoadSensors();
 }
 
 // Read sensor values and transmit them via serial interface
@@ -607,12 +631,23 @@ void transmitSensors(void) {
 }
 
 void transmitTemperature(void) {
-  updateSensors();
-  double r = NTC_DIV_R1 * ((ADC_MAX / loadtemp) - 1);
-  double temp = 1 / ((1 / NTC_T0) + (log(r / NTC_R0) / NTC_BETA));
-  UART_printInt((int) round(K_TO_C(temp))); UART_write(SEPARATOR);
-  UART_printInt(loadtemp); UART_write(SEPARATOR);
+  updateLoadSensors();
+  UART_printInt(loadtemp);
   UART_println("");
+}
+
+void set_fan(void) {
+  if (argument1 == 2) {
+    fan_control = FAN_AUTO;
+    return;
+  }
+  else {
+    if (argument1 == 0) pinLow(FAN_PIN);
+    else if (argument1 == 1) pinHigh(FAN_PIN);
+    fan_control = FAN_MANUAL;
+    return;
+  }
+  ledError();
 }
 
 // ===================================================================================
@@ -643,11 +678,6 @@ uint8_t CMD_isTerminated(void) {
 // ===================================================================================
 
 
-void overheat() {
-  ledError();
-  UART_println(TEMPERROR);
-}
-
 // Perform automatic load test according to minimum load voltage and maximum load current
 void loadTest(void) {
   uint8_t  DACvalue = 0; DAC0.DATA = 0;
@@ -657,17 +687,16 @@ void loadTest(void) {
   
   DAC_setReference(maxloadcurrent);               // set DAC reference according to max current
   while(++DACvalue) {                             // increase load every cycle
-    updateLoadSensors();                          // read all load sensor values
-    if(loadpower > MAXPOWER) break;               // stop when power reaches maximum
-    if(loadtemp  > MAXTEMP)  break;               // stop when heatsink is to hot
-    if(voltage1  < minloadvoltage) break;         // stop when voltage falls below minimum
-    if(current1  > maxloadcurrent) break;         // stop when current reaches maximum
-    DAC0.DATA = DACvalue;                         // set load for next measurement
+    if (updateLoadSensors() != 0) break;          // read all load sensor value
 
     // Transmit values via serial interface
     UART_printInt(current1);  UART_write(SEPARATOR);
     UART_printInt(voltage1);  UART_write(SEPARATOR);
     UART_printInt(loadpower); UART_println("");
+
+    if(voltage1  < minloadvoltage) break;         // stop when voltage falls below minimum
+    if(current1  > maxloadcurrent) break;         // stop when current reaches maximum
+    DAC0.DATA = DACvalue;                         // set load for next measurement
     
     _delay_ms(SETTLE);                            // give everything a little time to settle
   }
@@ -687,9 +716,7 @@ void regulationTest(void) {
   for(uint8_t i=0; i<10; i++) {
     DAC_set(maxloadcurrent * profile[i] / 10);
     while(MIL_read() < nextmillis) {
-      updateLoadSensors();                        // read all load sensor values
-      if(loadpower > MAXPOWER) break;             // stop when power reaches maximum
-      if(loadtemp  > MAXTEMP)  break;             // stop when heatsink is to hot
+      if (updateLoadSensors() != 0) break;
       UART_printInt(MIL_read() - startmillis); UART_write(SEPARATOR);
       UART_printInt(current1); UART_write(SEPARATOR);
       UART_printInt(voltage1); UART_println("");
@@ -744,9 +771,7 @@ void rippleTest(void) {
   
   DAC_setReference(maxloadcurrent);               // set DAC reference according to max current
   while(++DACvalue) {                             // increase load every cycle
-    updateLoadSensors();                          // read all load sensor values
-    if(loadpower > MAXPOWER) break;               // stop when power reaches maximum
-    if(loadtemp  > MAXTEMP)  break;               // stop when heatsink is to hot
+    if (updateLoadSensors() != 0) break;
     if(voltage1  < minloadvoltage) break;         // stop when voltage falls below minimum
     if(current1  > maxloadcurrent) break;         // stop when current reaches maximum
     INA_write(INA1ADDR, CONFIG_REG, INAFASTBUS);  // speed-up sampling rate of INA
@@ -781,9 +806,7 @@ void batteryTest(void) {
   DAC_setLoad(maxloadcurrent);                    // set the constant load current
   _delay_ms(SETTLE);                              // give everything a little time to settle
   while(DAC0.DATA) {                              // repeat until load is zero
-    updateLoadSensors();                          // read all load sensor values
-    if(loadpower > MAXPOWER) break;               // stop when power reaches maximum
-    if(loadtemp  > MAXTEMP)  break;               // stop when heatsink is to hot
+    if (updateLoadSensors() != 0) break;         // read all load sensor values, exit on error
     if(CMD_isTerminated()) break;                 // stop if termination command was sent
 
     // Decrease load if voltage drops below minloadvoltage
@@ -838,8 +861,6 @@ void calibrateLoad(void) {
   uint32_t endmillis = MIL_read() + (uint32_t)1000 * argument2;  // start the timer
   while(MIL_read() < endmillis) {
     updateSensors();                              // read all sensor values
-    if(loadpower > MAXPOWER) break;               // stop when power reaches maximum
-    if(loadtemp  > MAXTEMP)  break;               // stop when heatsink is to hot
 
     // Add up the measurements and increase the counter
     voltages1 += voltage1; currents1 += current1; voltages2 += voltage2; currents2 += current2;
@@ -900,11 +921,13 @@ int main(void) {
       case 'b':   batteryTest();         break;   // perform battery test
       case 'm':   multimeter();          break;   // long-term multimeter
       case 't':   transmitSensors();     break;   // read and transmit sensor values
+      case 'x':
       case 'r':   DAC_resetLoad();                // reset the load
                   UART_println(DONE);    break;
       case 's':   DAC_setLoad(argument1);         // set load current
                   UART_println(DONE);    break; 
       case 'p':   transmitTemperature(); break;   // transmit NTC temp
+      case 'w':   set_fan(); break;
       default:    ledError(); CMD_ptr = 0; break;
     }
     ledReady();
