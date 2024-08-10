@@ -587,12 +587,19 @@ uint8_t updateLoadSensors(void) {
   // Calculate load power and read temperature of the heatsink
   loadpower= ((uint32_t)voltage1 * current1 + 500) / 1000;
 
+#ifdef NTC_PIN
   uint16_t tempAdc = ADC_read(pinAIN(NTC_PIN));
   float rT = NTC_DIV_R1 * ((ADC_MAX / tempAdc) - 1);
   float temp = 1 / ((1 / NTC_T0) + (log(rT / NTC_R0) / NTC_BETA));
   loadtemp = (uint16_t) round(K_TO_C(temp));
 
-  if((loadpower > MAXPOWER) || (loadtemp > MAXTEMP)) {
+  if (loadtemp > MAXTEMP) {
+    overload();
+    return 1;
+  }
+#endif
+
+  if(loadpower > MAXPOWER) {
     overload();
     return 1;
   }
@@ -900,7 +907,10 @@ int main(void) {
   // Setup pins
   pinOutput(FAN_PIN);                             // set fan pin as output
   pinOutput(LED_PIN);                             // set LED pin as output
+
+#ifdef NTC_PIN
   pinDisable(NTC_PIN);                            // disable digital input buffer
+#endif
 
   // This delay not necessary, but the reassuring transition isn't visible otherwise:
   _delay_ms(BLINK_INFO);
