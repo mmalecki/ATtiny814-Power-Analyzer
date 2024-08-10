@@ -189,6 +189,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "scpi/scpi.h"
+
 // Pin definitions
 #define FAN_PIN     PA4                 // pin the fan is connected to
 #define NTC_PIN     PA5                 // pin the temperature sensor is connected to
@@ -341,15 +343,36 @@ void UART_printInt(uint16_t value) {
   }
 }
 
-// ===================================================================================
-// UART Implementation - Command Buffer
-// ===================================================================================
+#define SCPI_INPUT_BUFFER_LENGTH 256
+#define SCPI_ERROR_QUEUE_SIZE 17
+#define SCPI_IDN1 "mmalecki.com"
+#define SCPI_IDN2 "Pocket-Power-Prowler"
+#define SCPI_IDN3 NULL
+#define SCPI_IDN4 "01-02"
 
-// UART command buffer and pointer
-#define CMD_BUF_LEN 16                            // command buffer length
-volatile uint8_t CMD_buffer[CMD_BUF_LEN] = { 0 };         // command buffer
-volatile uint8_t CMD_ptr = 0;                     // buffer pointer for writing
-volatile uint8_t CMD_compl = 0;                   // command completely received flag
+scpi_command_t scpi_commands[] = {
+	/* { .pattern = "*IDN?", .callback = SCPI_CoreIdnQ,}, */
+	/* { .pattern = "*RST", .callback = SCPI_CoreRst,}, */
+	/* { .pattern = "MEASure:VOLTage:DC?", .callback = DMM_MeasureVoltageDcQ,}, */
+	SCPI_CMD_LIST_END
+};
+
+char scpi_input_buffer[SCPI_INPUT_BUFFER_LENGTH];
+scpi_error_t scpi_error_queue_data[SCPI_ERROR_QUEUE_SIZE];
+
+scpi_t scpi_context;
+
+size_t scpi_write(scpi_t * context, const char * data, size_t len) {
+  UART_print(data);
+}
+
+scpi_interface_t scpi_interface = {
+  .error = NULL,
+  .write = scpi_write,
+  .control = NULL,
+  .flush = NULL,
+  .reset = NULL,
+};
 
 void ledError() {
   ledBlink(BLINK_ERROR);
@@ -359,36 +382,7 @@ void ledError() {
 // UART RXC interrupt service routine (read command via UART)
 ISR(USART0_RXC_vect) {
   uint8_t data = USART0.RXDATAL;                  // read received data byte
-
-#ifdef UART_DEBUG
-  // 1 blink for each character in the buffer:
-  for (int i = 0; i <= CMD_ptr; i++) ledBlink(BLINK_INFO);
-#endif
-
-  if(!CMD_compl) {                                // command still incomplete?
-    if(data != '\n' && data != '\r') {            // not command end?
-#ifdef UART_LOOPBACK
-      UART_write(data);
-#endif
-
-      CMD_buffer[CMD_ptr] = data;                 // write received byte to buffer
-      if(CMD_ptr < (CMD_BUF_LEN-1)) CMD_ptr++;    // increase and limit pointer
-    } else if(CMD_ptr > 0) {                      // received at least one byte?
-#ifdef UART_DEBUG
-      // 3 short blinks for end of command:
-      ledBlink(BLINK_SHORT_INFO);
-      ledBlink(BLINK_SHORT_INFO);
-      ledBlink(BLINK_SHORT_INFO);
-#endif
-      CMD_compl = 1;                              // set command complete flag
-      CMD_buffer[CMD_ptr] = 0;                    // write string terminator
-      CMD_ptr = 0;                                // reset pointer
-#ifdef UART_LOOPBACK
-      UART_write('\r');
-      UART_write('\n');
-#endif
-    }
-  }  
+  SCPI_Input(&scpi_context, &data, 1);
 }
 
 // ===================================================================================
@@ -658,32 +652,8 @@ void set_fan(void) {
 }
 
 // ===================================================================================
-// Command Buffer Parser
-// ===================================================================================
-
-// Wait for, read and parse command string
-void CMD_read(void) {
-  while(!CMD_compl) updateLoadSensors();        // maintain fan control
-  uint8_t i = 0;
-  cmd = CMD_buffer[0];
-  argument1 = 0; argument2 = 0;
-  while(CMD_buffer[++i] == ' ');
-  while(CMD_buffer[i] > ' ') argument1 = argument1 * 10 + CMD_buffer[i++] - '0';
-  while(CMD_buffer[i] == ' ') i++;
-  while(CMD_buffer[i] != 0)  argument2 = argument2 * 10 + CMD_buffer[i++] - '0';
-  CMD_compl = 0;
-}
-
-// Check if termination command was send during a test program
-uint8_t CMD_isTerminated(void) {
-  if(CMD_compl) return(CMD_buffer[0] == 'x');
-  return 0;
-}
-
-// ===================================================================================
 // Test Algorithms
 // ===================================================================================
-
 
 // Perform automatic load test according to minimum load voltage and maximum load current
 void loadTest(void) {
@@ -801,38 +771,6 @@ void rippleTest(void) {
   UART_println(DONE);                             // transmit end of test
 }
 
-// Perform a battery discharge test
-void batteryTest(void) {
-  uint32_t capacity       = 0;
-  uint16_t maxloadcurrent = argument1;
-  uint16_t minloadvoltage = argument2;
-  uint32_t startmillis    = MIL_read();
-  uint32_t nextmillis     = startmillis + 1000;
-  if(maxloadcurrent > 3000) maxloadcurrent = 3000;
-  
-  DAC_setLoad(maxloadcurrent);                    // set the constant load current
-  _delay_ms(SETTLE);                              // give everything a little time to settle
-  while(DAC0.DATA) {                              // repeat until load is zero
-    if (updateLoadSensors() != 0) break;         // read all load sensor values, exit on error
-    if(CMD_isTerminated()) break;                 // stop if termination command was sent
-
-    // Decrease load if voltage drops below minloadvoltage
-    if(voltage1 < minloadvoltage) DAC0.DATA--;
-
-    // Transmit values via serial interface
-    UART_printInt((MIL_read() - startmillis) / 1000); UART_write(SEPARATOR);
-    UART_printInt(current1); UART_write(SEPARATOR);
-    UART_printInt(voltage1); UART_write(SEPARATOR);
-    UART_printInt(capacity / 3600); UART_println("");
-    
-    while(MIL_read() < nextmillis);               // wait for the next cycle (one cycle/second)
-    nextmillis += 1000;                           // set end time for next cycle
-    capacity   += current1;                       // calculate capacity
-  }
-  DAC_resetLoad();                                // reset the load to minimum
-  UART_println(DONE);                             // transmit end of test
-}
-
 // Long-term multimeter
 void multimeter(void) {
   DAC_resetLoad();
@@ -889,6 +827,7 @@ void calibrateLoad(void) {
 // Main Function
 // ===================================================================================
 
+
 int main(void) {
   // Setup MCU
   _PROTECTED_WRITE(CLKCTRL.MCLKCTRLB, 0);         // set clock frequency to 20 MHz
@@ -912,13 +851,20 @@ int main(void) {
   pinDisable(NTC_PIN);                            // disable digital input buffer
 #endif
 
+  SCPI_Init(&scpi_context,
+            scpi_commands,
+            &scpi_interface,
+            NULL,
+            SCPI_IDN1, SCPI_IDN2, SCPI_IDN3, SCPI_IDN4,
+            scpi_input_buffer, SCPI_INPUT_BUFFER_LENGTH,
+            scpi_error_queue_data, SCPI_ERROR_QUEUE_SIZE);
+
   // This delay not necessary, but the reassuring transition isn't visible otherwise:
   _delay_ms(BLINK_INFO);
   ledReady();
 
   // Loop
   while(1) {
-    CMD_read();                                   // wait for and read command
     ledBusy();
     switch(cmd) {
       case 'i':   UART_println(IDENT);   break;   // send identification
@@ -928,7 +874,6 @@ int main(void) {
       case 'g':   regulationTest();      break;   // perform regulation test
       case 'e':   efficiencyTest();      break;   // perform efficiency test
       case 'f':   rippleTest();          break;   // perform ripple test
-      case 'b':   batteryTest();         break;   // perform battery test
       case 'm':   multimeter();          break;   // long-term multimeter
       case 't':   transmitSensors();     break;   // read and transmit sensor values
       case 'x':
@@ -938,7 +883,7 @@ int main(void) {
                   UART_println(DONE);    break; 
       case 'p':   transmitTemperature(); break;   // transmit NTC temp
       case 'w':   set_fan(); break;
-      default:    ledError(); CMD_ptr = 0; break;
+      default:    ledError(); break;
     }
     ledReady();
   }

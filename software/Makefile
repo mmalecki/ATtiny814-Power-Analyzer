@@ -37,8 +37,15 @@ AVRDUDE  = avrdude -c jtag2updi -P $(PORT) -p $(DEVICE)
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.s *.d
 
 # Compiler Flags
-CFLAGS   = -w -flto -Os -mmcu=$(DEVICE) -DF_CPU=$(CLOCK) -x c++
-CFLAGS  += -B include/dev/$(DEVICE) -I include
+CFLAGS_COMMON = -mmcu=$(DEVICE) -Os -flto
+
+# Dependencies
+SCPIDIR = vendor/scpi-parser/libscpi
+SCPISTATIC = dist/libscpi.a
+
+CFLAGS   = $(CFLAGS_COMMON) -w -DF_CPU=$(CLOCK) -x c++
+CFLAGS  += -B include/dev/$(DEVICE) -I include -I $(SCPIDIR)/inc
+CFLAGS  += -L$(SCPIDIR)/dist -lscpi
 
 # Symbolic Targets
 help:
@@ -51,6 +58,9 @@ help:
 	@echo "make fuses     burn fuses of $(DEVICE) using $(PROGRMR) programmer"
 	@echo "make install   compile, upload and burn fuses for $(DEVICE)"
 	@echo "make clean     remove all build files"
+
+$(SCPIDIR)/$(SCPISTATIC):
+		CC=$(CC) CFLAGS="$(CFLAGS_COMMON)" $(MAKE) $(SCPISTATIC) -C $(SCPIDIR)
 
 all:	buildelf buildbin buildhex buildasm removetemp size
 
@@ -93,9 +103,9 @@ clean:
 	@$(CLEAN)
 	@rm -f $(TARGET).elf $(TARGET).bin $(TARGET).hex $(TARGET).asm
 
-buildelf:
+buildelf: $(SCPIDIR)/$(SCPISTATIC)
 	@echo "Compiling $(SRCS) for $(DEVICE) @ $(CLOCK)Hz ..."
-	@$(CC) $(CFLAGS) $(SRCS) -o $(TARGET).elf
+	@$(CC) $(SRCS) $(CFLAGS) -o $(TARGET).elf
 
 buildbin:
 	@echo "Building $(TARGET).bin ..."
