@@ -143,13 +143,13 @@
 // The Power Analyzer sets a constant current load of <loadcurrent> for <duration>.
 // It averages the measurements if both voltage/current sensors and transmits the
 // values via the serial interface in the format: 
-// current1[mA] voltage1[mV] current2[mA] voltage2[mV] (seperated by the SEPERATOR string)
+// current_load[mA] voltage_load[mV] current_power[mA] voltage_power[mV] (seperated by the SEPERATOR string)
 // Measure voltage and current with a trusty multimeter during this time and calculate
 // the calibration values as follows:
-// ILCAL1 = current measured with multimeter / transmitted value of current1
-// ULCAL1 = voltage measured with multimeter / transmitted value of voltage1
-// ILCAL2 = current measured with multimeter / transmitted value of current2
-// ULCAL2 = voltage measured with multimeter / transmitted value of voltage2
+// ILCAL1 = current measured with multimeter / transmitted value of current_load
+// ULCAL1 = voltage measured with multimeter / transmitted value of voltage_load
+// ILCAL2 = current measured with multimeter / transmitted value of current_power
+// ULCAL2 = voltage measured with multimeter / transmitted value of voltage_power
 // Change the calibration values in the sketch, compile and upload.
 // ---------------------------------------------------------------------------------------
 // Commands for Direct Control:
@@ -188,6 +188,7 @@
 #include <util/delay.h>                 // for delays
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
 
 // Pin definitions
 #define FAN_PIN     PA4                 // pin the fan is connected to
@@ -200,10 +201,11 @@
 #define RXD_PIN     PB3                 // UART receive data pin, connected to CH330N
 
 // Identifiers
-#define VERSION     "1.1"               // version number sent via serial if requested
+#define VERSION     "2.0"               // version number sent via serial if requested
 #define IDENT       "Power Analyzer"    // identifier sent via serial if requested
 #define SEPARATOR   '\t'                // seperator string for serial communication
 #define DONE        "DONE"              // string sent when operation has finished
+#define ERROR       "ERROR"
 #define OVERLOAD    "OVERLOAD"
 
 // Calibration values
@@ -213,6 +215,7 @@
 #define ULCAL2      1                   // linear voltage calibration factor (supply)
 
 // Parameters
+#define MAXCURRENT  5000
 #define MAXPOWER    25000               // maximum power of the load in mW -> turn off load
 #define FANONPOWER  700                 // power in mW to turn fan on
 #define FANOFFPOWER 500                 // power in mW to turn fan off
@@ -220,6 +223,11 @@
 #define FANONTEMP   50                  // fan-on temperature
 #define FANOFFTEMP  45                  // fan-off temperature
 
+#define DAC_MIN 0
+#define DAC_MAX 255
+#define DAC_K   0.25
+
+// NTC probe
 #define _K 273.15
 #define C_TO_K(X) (X + 273.15)
 #define K_TO_C(X) (X - 273.15)
@@ -230,7 +238,12 @@
 #define NTC_DIV_R1  10000.0
 #define ADC_MAX     1023.0
 
-#define SETTLE      25                  // settle time in ms
+#define STEP        1    // control loop time step, us
+
+#define ADJ_STEP    200  // adjustment step, ms: how often to adjust current in test programs
+#define CURRENT_ADJ 10
+
+#define REPORT_STEP 25  // report time step, ms: how often to report
 
 #define BLINK_SHORT_INFO  250
 #define BLINK_INFO        500
@@ -263,6 +276,9 @@ enum {PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PB0, PB1, PB2, PB3};    // enumera
 #define pinPullup(x)      (&PORTA.PIN0CTRL)[(((x)&8)<<2)+((x)&7)] |= PORT_PULLUPEN_bm
 #define pinAIN(x)         ((x)<8 ? (x) : (19-(x)))                    // convert pin to ADC port
 
+#define MAX(a, b)         (a > b ? a : b)
+#define MIN(a, b)         (a < b ? a : b)
+
 #define ledBlink(INTERVAL) ledToggle(); \
                            _delay_ms(INTERVAL); \
                            ledToggle(); \
@@ -273,21 +289,24 @@ enum {PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PB0, PB1, PB2, PB3};    // enumera
 #define ledToggle() pinToggle(LED_PIN)
 
 typedef enum { FAN_AUTO, FAN_MANUAL } fan_control_t;
+typedef enum { DAC_AUTO, DAC_MANUAL } dac_control_t;
 
 // Global variables (voltages in mV, currents in mA, power in mW, shunts in 0.01 mV)
-uint16_t voltage1, current1, voltage2, current2, shunt1, shunt2, power2, loadtemp;
+uint16_t current_desired = 0;
+uint16_t voltage_load, current_load, voltage_power, current_power, shunt1, shunt2, power2, loadtemp = 0;
 uint16_t argument1, argument2;
 uint16_t loadpower = 0;
 char     cmd;
 
 fan_control_t fan_control = FAN_AUTO;
+dac_control_t dac_control = DAC_AUTO;
 
 // ===================================================================================
 // UART Implementation - Low Level Functions (8N1, no calibration, with RX-interrupt)
 // ===================================================================================
 
 // UART definitions and macros
-#define UART_BAUD         9600
+#define UART_BAUD         115200
 #define UART_BAUD_RATE    ((float)(F_CPU * 64 / (16 * (float)UART_BAUD)) + 0.5)
 #define UART_ready()      (USART0.STATUS & USART_DREIF_bm)
 
@@ -497,49 +516,25 @@ ISR(TCB0_INT_vect) {
 // DAC Implementation and Load Control Functions
 // ===================================================================================
 
-// DAC reference voltages (load current = DAC voltage * R16 / (R15 + R16) / R_SHUNT)
-// Reference voltages:    0.55V, 1.1V, 1.5V, 2.5V, 4.3V
-const uint8_t  DACREF[] = {0x00, 0x01, 0x04, 0x02, 0x03}; // CTRLA.DAC0REFSEL values
-const uint16_t DACCUR[] = { 717, 1434, 1956, 3260, 5608}; // max current in mA
-uint8_t DACreference = 0;                                 // start with 0.55V reference
-
 // Setup the digital to analog converter (DAC)
 void DAC_init(void) {
+  // Start up with 1V5, which according to calculations should cover the entire
+  // current range well. One could go lower if desired, to achieve higher accuracy
+  // over smaller current ranges.
+  VREF_CTRLA |= VREF_DAC0REFSEL_1V5_gc;
   VREF_CTRLB |= VREF_DAC0REFEN_bm;                // enable DAC reference
   _delay_us(25);                                  // wait for Vref to start up
   pinDisable(DAC_PIN);                            // disable digital input buffer
+  DAC0.DATA = 0;
   DAC0.CTRLA  = DAC_ENABLE_bm                     // enable DAC
               | DAC_OUTEN_bm;                     // enable output buffer
 }
 
-// Set the lowest reference voltage possible for the DAC to meet the load current
-void DAC_setReference(uint16_t current) {
-  DACreference = 0;
-  if(current > DACCUR[4]) current = DACCUR[4];
-  while(current > DACCUR[DACreference]) DACreference++;
-  DAC0.DATA   = 0;
-  VREF_CTRLA &= 0xf8;
-  VREF_CTRLA |= DACREF[DACreference];
-  _delay_us(SETTLE);
+void set_current(uint16_t current) {
+  dac_control = DAC_AUTO;
+  current_desired = MIN(current, MAXCURRENT);
 }
 
-// Set the DAC within the selected reference to the specified load current
-void DAC_set(uint16_t current) {
-  if(current > 5000) current = 5000;
-  if(current > DACCUR[DACreference]) DAC0.DATA = 255;
-  else DAC0.DATA = (uint32_t)255 * current / DACCUR[DACreference];
-}
-
-// Set the DAC and its reference to the specified load current
-void DAC_setLoad(uint16_t current) {
-  DAC_setReference(current);                      // set suitable voltage reference
-  DAC_set(current);                               // set DAC according to desired load
-}
-
-// Reset the load to minimum
-void DAC_resetLoad(void) {
-  DAC_setLoad(0);                                 // reset the load to minimum
-}
 
 // ===================================================================================
 // ADC Implementation
@@ -567,7 +562,7 @@ uint16_t ADC_read(uint8_t port) {
 // ===================================================================================
 
 void overload() {
-  DAC_resetLoad();
+  set_current(0);
   fan_control = FAN_AUTO;
   pinHigh(FAN_PIN);
   ledError();
@@ -579,13 +574,28 @@ uint8_t updateLoadSensors(void) {
   // Read values from INA on the load side
   shunt1   = INA_read(INA1ADDR, SHUNT_REG);
   if(shunt1 > 4095) shunt1 = 0;
-  voltage1 = (INA_read(INA1ADDR, VOLTAGE_REG) >> 1) & 0xfffc;
-  voltage1 = ((float)shunt1 / 100 + voltage1) * ULCAL1 + 0.5;
-  current1 = INA_read(INA1ADDR, CURRENT_REG);
-  if(current1 > 32767) current1 = 0;
+  voltage_load = (INA_read(INA1ADDR, VOLTAGE_REG) >> 1) & 0xfffc;
+  voltage_load = ((float)shunt1 / 100 + voltage_load) * ULCAL1 + 0.5;
+  current_load = INA_read(INA1ADDR, CURRENT_REG);
+  if(current_load > 32767) current_load = 0;
+
+  if (dac_control == DAC_AUTO) {
+    if (current_desired == 0) DAC0.DATA = 0;
+    else if (current_load != current_desired) {
+      int16_t error = current_desired - current_load;
+      int16_t change = current_load == 0 ? 2 : (error > 0 ? 1 : -1);
+      DAC0.DATA = MAX(
+        DAC_MIN,
+        MIN(
+          DAC_MAX,
+          DAC0.DATA + change
+        )
+      );
+    }
+  }
 
   // Calculate load power and read temperature of the heatsink
-  loadpower= ((uint32_t)voltage1 * current1 + 500) / 1000;
+  loadpower= ((uint32_t)voltage_load * current_load + 500) / 1000;
 
 #ifdef NTC_PIN
   uint16_t tempAdc = ADC_read(pinAIN(NTC_PIN));
@@ -615,10 +625,10 @@ uint8_t updateLoadSensors(void) {
 
 // Read voltage and current of PWR-IN/PWR-OUT
 void updatePowerSensors(void) {
-  voltage2 = (INA_read(INA2ADDR, VOLTAGE_REG) >> 1) & 0xfffc;
-  voltage2 = (float)voltage2 * ULCAL2 + 0.5;
-  current2 = INA_read(INA2ADDR, CURRENT_REG);
-  if(current2 > 32767) current2 = 0;
+  voltage_power = (INA_read(INA2ADDR, VOLTAGE_REG) >> 1) & 0xfffc;
+  voltage_power = (float)voltage_power * ULCAL2 + 0.5;
+  current_power = INA_read(INA2ADDR, CURRENT_REG);
+  if(current_power > 32767) current_power = 0;
 }
 
 // Read all sensors and updates the corresponding variables
@@ -627,17 +637,14 @@ uint8_t updateSensors(void) {
   return updateLoadSensors();
 }
 
-// Read sensor values and transmit them via serial interface
-void transmitSensors(void) {
-  updateSensors();
-  UART_printInt(current1); UART_write(SEPARATOR);
-  UART_printInt(voltage1); UART_write(SEPARATOR);
-  UART_printInt(current2); UART_write(SEPARATOR);
-  UART_printInt(voltage2);
-  UART_println("");
+uint8_t wait_for_current(uint16_t current) {
+  while (current_load < current_desired) {
+    updateLoadSensors();
+    _delay_ms(STEP);
+  }
+  return 0;
 }
-
-void transmitTemperature(void) {
+void transmit_temperature(void) {
   updateLoadSensors();
   UART_printInt(loadtemp);
   UART_println("");
@@ -663,7 +670,7 @@ void set_fan(void) {
 
 // Wait for, read and parse command string
 void CMD_read(void) {
-  while(!CMD_compl) updateLoadSensors();        // maintain fan control
+  while(!CMD_compl) { updateSensors(); _delay_ms(STEP); }
   uint8_t i = 0;
   cmd = CMD_buffer[0];
   argument1 = 0; argument2 = 0;
@@ -686,204 +693,219 @@ uint8_t CMD_isTerminated(void) {
 
 
 // Perform automatic load test according to minimum load voltage and maximum load current
-void loadTest(void) {
+void load_test(void) {
   uint8_t  DACvalue = 0; DAC0.DATA = 0;
-  uint16_t maxloadcurrent = argument1;
+  uint16_t maxloadcurrent = MIN(argument1, MAXCURRENT);
   uint16_t minloadvoltage = argument2;
-  if(maxloadcurrent > 4999) maxloadcurrent = 4999;
-  
-  DAC_setReference(maxloadcurrent);               // set DAC reference according to max current
-  while(++DACvalue) {                             // increase load every cycle
+
+  uint32_t step_time = MIL_read();
+  uint32_t next_adj_step = step_time + ADJ_STEP;
+  uint32_t next_report_step = step_time + REPORT_STEP;
+
+  set_current(CURRENT_ADJ);
+  // Start reporting and stepping up only after we ramp up.
+  if (wait_for_current(1) != 0) {
+    set_current(0);
+    UART_println(ERROR);
+    ledError();
+    return;
+  }
+
+  while(current_load < maxloadcurrent && !CMD_isTerminated()) {
+    step_time = MIL_read();
+    if (step_time >= next_adj_step) {
+      next_adj_step = step_time + ADJ_STEP;
+      set_current(MIN(current_desired + CURRENT_ADJ, maxloadcurrent));
+    }
+
     if (updateLoadSensors() != 0) break;          // read all load sensor value
 
-    // Transmit values via serial interface
-    UART_printInt(current1);  UART_write(SEPARATOR);
-    UART_printInt(voltage1);  UART_write(SEPARATOR);
-    UART_printInt(loadpower); UART_println("");
+    if (step_time >= next_report_step) {
+      next_report_step = step_time + REPORT_STEP;
+      // Transmit values via serial interface
+      UART_printInt(current_load);  UART_write(SEPARATOR);
+      UART_printInt(voltage_load);  UART_write(SEPARATOR);
+      UART_printInt(loadpower); UART_println("");
+    }
 
-    if(voltage1  < minloadvoltage) break;         // stop when voltage falls below minimum
-    if(current1  > maxloadcurrent) break;         // stop when current reaches maximum
-    DAC0.DATA = DACvalue;                         // set load for next measurement
+    if(voltage_load  < minloadvoltage) break;         // stop when voltage falls below minimum
     
-    _delay_ms(SETTLE);                            // give everything a little time to settle
+    _delay_ms(STEP);                            // give everything a little time to settle
   }
-  DAC_resetLoad();                                // reset the load to minimum
+
+  set_current(0);
   UART_println(DONE);                             // transmit end of test
 }
+
+// Transmit sensors, optionally on interval, for a period of time
+void transmit_sensors() {
+  uint32_t step_time = MIL_read();
+  uint32_t next_step = step_time;
+  uint32_t last_step = step_time + argument2;
+  do {
+    if ((step_time = MIL_read()) >= next_step) {
+      updateSensors();
+      UART_printInt(current_load); UART_write(SEPARATOR);
+      UART_printInt(voltage_load); UART_write(SEPARATOR);
+      UART_printInt(current_power); UART_write(SEPARATOR);
+      UART_printInt(voltage_power);
+      UART_println("");
+      next_step = step_time + argument1;
+      _delay_ms(STEP);
+    }
+  } while (!CMD_isTerminated() && next_step < last_step);
+}
+
 
 // Perform a voltage regulation test up to the max load current
-void regulationTest(void) {
-  uint16_t maxloadcurrent = argument1;
-  uint8_t  profile[] = {0, 2, 5, 7, 10, 10, 5, 0, 10, 0};
-  INA_write(INA1ADDR, CONFIG_REG, INAFASTBOTH);   // speed-up sampling rate of INA
-  DAC_setReference(maxloadcurrent);
-  uint32_t startmillis = MIL_read();
-  uint32_t nextmillis  = startmillis + 100;
+/* void regulationTest(void) { */
+/*   uint16_t maxloadcurrent = argument1; */
+/*   uint8_t  profile[] = {0, 2, 5, 7, 10, 10, 5, 0, 10, 0}; */
+/*   INA_write(INA1ADDR, CONFIG_REG, INAFASTBOTH);   // speed-up sampling rate of INA */
+/*   DAC_setReference(maxloadcurrent); */
+/*   uint32_t startmillis = MIL_read(); */
+/*   uint32_t nextmillis  = startmillis + 100; */
 
-  for(uint8_t i=0; i<10; i++) {
-    DAC_set(maxloadcurrent * profile[i] / 10);
-    while(MIL_read() < nextmillis) {
-      if (updateLoadSensors() != 0) break;
-      UART_printInt(MIL_read() - startmillis); UART_write(SEPARATOR);
-      UART_printInt(current1); UART_write(SEPARATOR);
-      UART_printInt(voltage1); UART_println("");
-    }
-    nextmillis += 100;
-  }
-  DAC_resetLoad();                                // reset the load to minimum
-  INA_write(INA1ADDR, CONFIG_REG, INA1CONFIG);    // INA back to normal operation
-  UART_println(DONE);                             // transmit end of test
-}
+/*   for(uint8_t i=0; i<10; i++) { */
+/*     DAC_set(maxloadcurrent * profile[i] / 10); */
+/*     while(MIL_read() < nextmillis) { */
+/*       if (updateLoadSensors() != 0) break; */
+/*       UART_printInt(MIL_read() - startmillis); UART_write(SEPARATOR); */
+/*       UART_printInt(current_load); UART_write(SEPARATOR); */
+/*       UART_printInt(voltage_load); UART_println(""); */
+/*     } */
+/*     nextmillis += 100; */
+/*   } */
+/*   DAC_resetLoad();                                // reset the load to minimum */
+/*   INA_write(INA1ADDR, CONFIG_REG, INA1CONFIG);    // INA back to normal operation */
+/*   UART_println(DONE);                             // transmit end of test */
+/* } */
 
-// Perform automatic efficiency test according to minimum load voltage and maximum load current
-void efficiencyTest(void) {
-  uint16_t supplypower;
-  uint16_t efficiency;
-  uint8_t  DACvalue = 0; DAC0.DATA = 0;
-  uint16_t maxloadcurrent = argument1;
-  uint16_t minloadvoltage = argument2;
-  if(maxloadcurrent > 4999) maxloadcurrent = 4999;
+/* // Perform automatic efficiency test according to minimum load voltage and maximum load current */
+/* void efficiencyTest(void) { */
+/*   uint16_t supplypower; */
+/*   uint16_t efficiency; */
+/*   uint8_t  DACvalue = 0; DAC0.DATA = 0; */
+/*   uint16_t maxloadcurrent = argument1; */
+/*   uint16_t minloadvoltage = argument2; */
+/*   if(maxloadcurrent > 4999) maxloadcurrent = 4999; */
   
-  DAC_setReference(maxloadcurrent);               // set DAC reference according to max current
-  while(++DACvalue) {                             // increase load every cycle
-    updateSensors();                              // read all sensor values
-    if(loadpower > MAXPOWER) break;               // stop when power reaches maximum
-    if(loadtemp  > MAXTEMP)  break;               // stop when heatsink is to hot
-    if(voltage1  < minloadvoltage) break;         // stop when voltage falls below minimum
-    if(current1  > maxloadcurrent) break;         // stop when current reaches maximum
-    DAC0.DATA = DACvalue;                         // set load for next measurement
+/*   DAC_setReference(maxloadcurrent);               // set DAC reference according to max current */
+/*   while(++DACvalue) {                             // increase load every cycle */
+/*     updateSensors();                              // read all sensor values */
+/*     if(loadpower > MAXPOWER) break;               // stop when power reaches maximum */
+/*     if(loadtemp  > MAXTEMP)  break;               // stop when heatsink is to hot */
+/*     if(voltage_load  < minloadvoltage) break;         // stop when voltage falls below minimum */
+/*     if(current_load  > maxloadcurrent) break;         // stop when current reaches maximum */
+/*     DAC0.DATA = DACvalue;                         // set load for next measurement */
 
-    // Calculate efficiency
-    supplypower = ((uint32_t)voltage2 * current2 + 500) / 1000;
-    efficiency  = (float)loadpower * 1000 / supplypower + 0.5;
+/*     // Calculate efficiency */
+/*     supplypower = ((uint32_t)voltage_power * current_power + 500) / 1000; */
+/*     efficiency  = (float)loadpower * 1000 / supplypower + 0.5; */
 
-    // Transmit values via serial interface
-    UART_printInt(current1);   UART_write(SEPARATOR);
-    UART_printInt(voltage1);   UART_write(SEPARATOR);
-    UART_printInt(efficiency); UART_println("");
+/*     // Transmit values via serial interface */
+/*     UART_printInt(current_load);   UART_write(SEPARATOR); */
+/*     UART_printInt(voltage_load);   UART_write(SEPARATOR); */
+/*     UART_printInt(efficiency); UART_println(""); */
     
-    _delay_ms(SETTLE);                            // give everything a little time to settle
-  }  
-  DAC_resetLoad();                                // reset the load to minimum
-  UART_println(DONE);                             // transmit end of test
-}
+/*     _delay_ms(STEP);                            // give everything a little time to settle */
+/*   } */  
+/*   DAC_resetLoad();                                // reset the load to minimum */
+/*   UART_println(DONE);                             // transmit end of test */
+/* } */
 
-// Perform low frequency ripple test
-void rippleTest(void) {
-  uint8_t  DACvalue = 0; DAC0.DATA = 0;
-  uint16_t minvoltage, maxvoltage;
-  uint16_t maxloadcurrent = argument1;
-  uint16_t minloadvoltage = argument2;
-  if(maxloadcurrent > 4999) maxloadcurrent = 4999;
+/* // Perform low frequency ripple test */
+/* void ripple_test(void) { */
+/*   uint16_t minvoltage, maxvoltage; */
+/*   uint16_t maxloadcurrent = MIN(argument1, MAXCURRENT); */
+/*   uint16_t minloadvoltage = argument2; */
   
-  DAC_setReference(maxloadcurrent);               // set DAC reference according to max current
-  while(++DACvalue) {                             // increase load every cycle
-    if (updateLoadSensors() != 0) break;
-    if(voltage1  < minloadvoltage) break;         // stop when voltage falls below minimum
-    if(current1  > maxloadcurrent) break;         // stop when current reaches maximum
-    INA_write(INA1ADDR, CONFIG_REG, INAFASTBUS);  // speed-up sampling rate of INA
-    minvoltage = 26000; maxvoltage = 0;           // reset peak voltage values
-    for(uint8_t i=255; i; i--) {                  // get 255 voltage readings
-      // Read voltage and update peak values
-      voltage1 = (INA_read(INA1ADDR, VOLTAGE_REG) >> 1) & 0xfffc;
-      if(voltage1 > maxvoltage) maxvoltage = voltage1;
-      if(voltage1 < minvoltage) minvoltage = voltage1;
-    }
-    INA_write(INA1ADDR, CONFIG_REG, INA1CONFIG);  // INA back to normal operation
-    DAC0.DATA = DACvalue;                         // set load for next measurement
+/*   while(++DACvalue) {                             // increase load every cycle */
+/*     if (updateLoadSensors() != 0) break; */
+/*     if(voltage_load  < minloadvoltage) break;         // stop when voltage falls below minimum */
+/*     if(current_load  > maxloadcurrent) break;         // stop when current reaches maximum */
+/*     INA_write(INA1ADDR, CONFIG_REG, INAFASTBUS);  // speed-up sampling rate of INA */
+/*     minvoltage = 26000; maxvoltage = 0;           // reset peak voltage values */
+/*     for(uint8_t i=255; i; i--) {                  // get 255 voltage readings */
+/*       // Read voltage and update peak values */
+/*       voltage_load = (INA_read(INA1ADDR, VOLTAGE_REG) >> 1) & 0xfffc; */
+/*       if(voltage_load > maxvoltage) maxvoltage = voltage_load; */
+/*       if(voltage_load < minvoltage) minvoltage = voltage_load; */
+/*     } */
+/*     INA_write(INA1ADDR, CONFIG_REG, INA1CONFIG);  // INA back to normal operation */
+/*     DAC0.DATA = DACvalue;                         // set load for next measurement */
 
-    // Transmit values via serial interface
-    UART_printInt(current1); UART_write(SEPARATOR);
-    UART_printInt(maxvoltage - minvoltage); UART_println("");
-    _delay_ms(SETTLE);                            // give everything a little time to settle
-  } 
-  DAC_resetLoad();                                // reset the load to minimum
-  UART_println(DONE);                             // transmit end of test
-}
+/*     // Transmit values via serial interface */
+/*     UART_printInt(current_load); UART_write(SEPARATOR); */
+/*     UART_printInt(maxvoltage - minvoltage); UART_println(""); */
+/*     _delay_ms(STEP);                            // give everything a little time to settle */
+/*   } */ 
+/*   DAC_resetLoad();                                // reset the load to minimum */
+/*   UART_println(DONE);                             // transmit end of test */
+/* } */
 
-// Perform a battery discharge test
-void batteryTest(void) {
-  uint32_t capacity       = 0;
-  uint16_t maxloadcurrent = argument1;
-  uint16_t minloadvoltage = argument2;
-  uint32_t startmillis    = MIL_read();
-  uint32_t nextmillis     = startmillis + 1000;
-  if(maxloadcurrent > 3000) maxloadcurrent = 3000;
+/* // Perform a battery discharge test */
+/* void batteryTest(void) { */
+/*   uint32_t capacity       = 0; */
+/*   uint16_t maxloadcurrent = argument1; */
+/*   uint16_t minloadvoltage = argument2; */
+/*   uint32_t startmillis    = MIL_read(); */
+/*   uint32_t nextmillis     = startmillis + 1000; */
+/*   if(maxloadcurrent > 3000) maxloadcurrent = 3000; */
   
-  DAC_setLoad(maxloadcurrent);                    // set the constant load current
-  _delay_ms(SETTLE);                              // give everything a little time to settle
-  while(DAC0.DATA) {                              // repeat until load is zero
-    if (updateLoadSensors() != 0) break;         // read all load sensor values, exit on error
-    if(CMD_isTerminated()) break;                 // stop if termination command was sent
+/*   DAC_setLoad(maxloadcurrent);                    // set the constant load current */
+/*   _delay_ms(STEP);                              // give everything a little time to settle */
+/*   while(DAC0.DATA) {                              // repeat until load is zero */
+/*     if (updateLoadSensors() != 0) break;         // read all load sensor values, exit on error */
+/*     if(CMD_isTerminated()) break;                 // stop if termination command was sent */
 
-    // Decrease load if voltage drops below minloadvoltage
-    if(voltage1 < minloadvoltage) DAC0.DATA--;
+/*     // Decrease load if voltage drops below minloadvoltage */
+/*     if(voltage_load < minloadvoltage) DAC0.DATA--; */
 
-    // Transmit values via serial interface
-    UART_printInt((MIL_read() - startmillis) / 1000); UART_write(SEPARATOR);
-    UART_printInt(current1); UART_write(SEPARATOR);
-    UART_printInt(voltage1); UART_write(SEPARATOR);
-    UART_printInt(capacity / 3600); UART_println("");
+/*     // Transmit values via serial interface */
+/*     UART_printInt((MIL_read() - startmillis) / 1000); UART_write(SEPARATOR); */
+/*     UART_printInt(current_load); UART_write(SEPARATOR); */
+/*     UART_printInt(voltage_load); UART_write(SEPARATOR); */
+/*     UART_printInt(capacity / 3600); UART_println(""); */
     
-    while(MIL_read() < nextmillis);               // wait for the next cycle (one cycle/second)
-    nextmillis += 1000;                           // set end time for next cycle
-    capacity   += current1;                       // calculate capacity
-  }
-  DAC_resetLoad();                                // reset the load to minimum
-  UART_println(DONE);                             // transmit end of test
-}
+/*     while(MIL_read() < nextmillis);               // wait for the next cycle (one cycle/second) */
+/*     nextmillis += 1000;                           // set end time for next cycle */
+/*     capacity   += current_load;                       // calculate capacity */
+/*   } */
+/*   DAC_resetLoad();                                // reset the load to minimum */
+/*   UART_println(DONE);                             // transmit end of test */
+/* } */
 
-// Long-term multimeter
-void multimeter(void) {
-  DAC_resetLoad();
-  uint16_t interval    = argument1;
-  uint16_t duration    = argument2;
-  uint32_t startmillis = MIL_read();
-  uint32_t nextmillis  = startmillis + interval;
-  uint32_t endmillis   = startmillis + (uint32_t)1000 * duration;
-
-  while(MIL_read() <= endmillis) {
-    if(CMD_isTerminated()) break;                 // stop if termination command was sent
-    updatePowerSensors();                         // read all power sensor values
-    UART_printInt(MIL_read() - startmillis); UART_write(SEPARATOR);
-    UART_printInt(current2); UART_write(SEPARATOR);
-    UART_printInt(voltage2); UART_println("");
-    while(MIL_read() < nextmillis);               // wait for the next cycle
-    nextmillis += interval;                       // set end time for next cycle
-  }
-  UART_println(DONE);                             // transmit end of test
-}
-
-// Set a load for calibration
-void calibrateLoad(void) {
-  uint8_t  counter     = 0;                       // counts the number of measurements
-  uint32_t voltages1   = 0;                       // accumulates all voltage measurements (load)
-  uint32_t currents1   = 0;                       // accumulates all current measurements (load)
-  uint32_t voltages2   = 0;                       // accumulates all voltage measurements (supply)
-  uint32_t currents2   = 0;                       // accumulates all current measurements (supply)
-  uint16_t loadcurrent = argument1;               // argument1 is the constant load current
+/* // Set a load for calibration */
+/* void calibrateLoad(void) { */
+/*   uint8_t  counter     = 0;                       // counts the number of measurements */
+/*   uint32_t voltages1   = 0;                       // accumulates all voltage measurements (load) */
+/*   uint32_t currents1   = 0;                       // accumulates all current measurements (load) */
+/*   uint32_t voltages2   = 0;                       // accumulates all voltage measurements (supply) */
+/*   uint32_t currents2   = 0;                       // accumulates all current measurements (supply) */
+/*   uint16_t loadcurrent = argument1;               // argument1 is the constant load current */
   
-  DAC_setLoad(loadcurrent);                       // set the constant load current
-  _delay_ms(SETTLE);                              // a little settle time
-  uint32_t endmillis = MIL_read() + (uint32_t)1000 * argument2;  // start the timer
-  while(MIL_read() < endmillis) {
-    updateSensors();                              // read all sensor values
+/*   DAC_setLoad(loadcurrent);                       // set the constant load current */
+/*   _delay_ms(STEP);                              // a little settle time */
+/*   uint32_t endmillis = MIL_read() + (uint32_t)1000 * argument2;  // start the timer */
+/*   while(MIL_read() < endmillis) { */
+/*     updateSensors();                              // read all sensor values */
 
-    // Add up the measurements and increase the counter
-    voltages1 += voltage1; currents1 += current1; voltages2 += voltage2; currents2 += current2;
-    counter++;
+/*     // Add up the measurements and increase the counter */
+/*     voltages1 += voltage_load; currents1 += current_load; voltages2 += voltage_power; currents2 += current_power; */
+/*     counter++; */
     
-    // Transmit averaged values via serial interface
-    UART_printInt(currents1 / counter); UART_write(SEPARATOR);
-    UART_printInt(voltages1 / counter); UART_write(SEPARATOR);
-    UART_printInt(currents2 / counter); UART_write(SEPARATOR);
-    UART_printInt(voltages2 / counter); UART_println("");
+/*     // Transmit averaged values via serial interface */
+/*     UART_printInt(currents1 / counter); UART_write(SEPARATOR); */
+/*     UART_printInt(voltages1 / counter); UART_write(SEPARATOR); */
+/*     UART_printInt(currents2 / counter); UART_write(SEPARATOR); */
+/*     UART_printInt(voltages2 / counter); UART_println(""); */
 
-    _delay_ms(100);
-  }
-  DAC_resetLoad();                                // reset the load to minimum
-  UART_println(DONE);                             // transmit end of test
-}
+/*     _delay_ms(100); */
+/*   } */
+/*   DAC_resetLoad();                                // reset the load to minimum */
+/*   UART_println(DONE);                             // transmit end of test */
+/* } */
 
 // ===================================================================================
 // Main Function
@@ -923,20 +945,21 @@ int main(void) {
     switch(cmd) {
       case 'i':   UART_println(IDENT);   break;   // send identification
       case 'v':   UART_println(VERSION); break;   // send version number
-      case 'c':   calibrateLoad();       break;   // set load for calibration
-      case 'l':   loadTest();            break;   // perform load test
-      case 'g':   regulationTest();      break;   // perform regulation test
-      case 'e':   efficiencyTest();      break;   // perform efficiency test
-      case 'f':   rippleTest();          break;   // perform ripple test
-      case 'b':   batteryTest();         break;   // perform battery test
-      case 'm':   multimeter();          break;   // long-term multimeter
-      case 't':   transmitSensors();     break;   // read and transmit sensor values
-      case 'x':
-      case 'r':   DAC_resetLoad();                // reset the load
+      /* case 'c':   calibrateLoad();       break;   // set load for calibration */
+      case 'l':   load_test();           break;   // perform load test
+      /* case 'g':   regulationTest();      break;   // perform regulation test */
+      /* case 'e':   efficiencyTest();      break;   // perform efficiency test */
+      /* case 'r':   ripple_test();          break;   // perform ripple test */
+      /* case 'b':   batteryTest();         break;   // perform battery test */
+      /* case 'm':   multimeter();          break;   // long-term multimeter */
+      case 't':   transmit_sensors();     break;   // read and transmit sensor values
+      case 'x':   set_current(0);                // reset the load
                   UART_println(DONE);    break;
-      case 's':   DAC_setLoad(argument1);         // set load current
+      case 's':   set_current(argument1);        // set load current
                   UART_println(DONE);    break; 
-      case 'p':   transmitTemperature(); break;   // transmit NTC temp
+      case 'd':   DAC0.DATA = argument1;
+                  dac_control = DAC_MANUAL; break;
+      case 'p':   transmit_temperature(); break;   // transmit NTC temp
       case 'w':   set_fan(); break;
       default:    ledError(); CMD_ptr = 0; break;
     }
