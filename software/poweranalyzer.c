@@ -702,7 +702,7 @@ void load_test(void) {
   uint32_t next_adj_step = step_time + ADJ_STEP;
   uint32_t next_report_step = step_time + REPORT_STEP;
 
-  set_current(CURRENT_ADJ);
+  set_current(1);
   // Start reporting and stepping up only after we ramp up.
   if (wait_for_current(1) != 0) {
     set_current(0);
@@ -711,16 +711,20 @@ void load_test(void) {
     return;
   }
 
-  while(current_load < maxloadcurrent && !CMD_isTerminated()) {
+  while(!CMD_isTerminated()) {
     step_time = MIL_read();
     if (step_time >= next_adj_step) {
       next_adj_step = step_time + ADJ_STEP;
       set_current(MIN(current_desired + CURRENT_ADJ, maxloadcurrent));
     }
 
-    if (updateLoadSensors() != 0) break;          // read all load sensor value
+    bool stop = false;
 
-    if (step_time >= next_report_step) {
+    if (updateLoadSensors() != 0) stop = true;
+    if (voltage_load < minloadvoltage || current_load >= maxloadcurrent )
+      stop = true;
+
+    if (step_time >= next_report_step || stop) {
       next_report_step = step_time + REPORT_STEP;
       // Transmit values via serial interface
       UART_printInt(current_load);  UART_write(SEPARATOR);
@@ -728,8 +732,7 @@ void load_test(void) {
       UART_printInt(loadpower); UART_println("");
     }
 
-    if(voltage_load  < minloadvoltage) break;         // stop when voltage falls below minimum
-    
+    if (stop) break;
     _delay_ms(STEP);                            // give everything a little time to settle
   }
 
