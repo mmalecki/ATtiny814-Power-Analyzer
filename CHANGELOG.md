@@ -1,12 +1,14 @@
 # v2r0
 
 ## Hardware
+* Migrated to KiCad
 * Migrate from USB B to USB C
 * Migrate from CH330N to FT232 due to part availability
 * Migrate to direct current control loop as opposed to shunt-based method, saving board space and heat concerns
-* Drastically reduce DAC output capacitor, removing seesaw effect (max allowed capacitance is 30 pF)
+* Drastically reduce DAC output capacitor, change its purpose from seemingly sampling to filtering, removing seesaw effect (max allowed capacitance is 30 pF)
 * Add a low-pass RC filter on both input and output of the opamp
 * Move OpAmp closer to DAC, reducing noise pick up
+* Add sampling capacitor to NTC
 
 ## Software
 * Add direct NTC probe temperature calculations
