@@ -1,0 +1,153 @@
+/* Reset default margin and padding */
+body, h1, p, div, header, section, main, aside, button {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.hide {
+  display: none !important;
+}
+
+/* Top Bar */
+.connection {
+  background-color: #333;
+  color: white;
+  padding: 16px;
+  text-align: left;
+}
+
+.connection button {
+  display: inline;
+}
+
+/* Top Section */
+.test {
+  background-color: #f4f4f4;
+  padding: 16px;
+}
+
+.test-list {
+  display: inline-block;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+button {
+  background-color: #6b7b8c;
+  color: white;
+  border: none;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+}
+
+button:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+button:active, button.selected{
+  background-color: #00408d;
+  transform: translateY(0);
+}
+
+button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5);
+}
+
+.test > section {
+  display: none;
+  padding-top: 8px;
+}
+
+.test > section.selected {
+  display: block;
+}
+
+.test-form {
+  display: table;
+  margin-top: 8px;
+}
+
+.test-form > button {
+  margin-top: 8px;
+}
+
+.test-form .row {
+  display: table-row;
+}
+
+.test-form .row * {
+  display: table-cell;
+  margin-left: 16px;
+  margin-right: 16px;
+  margin-top: 4px;
+}
+
+
+/* Main Layout */
+.main-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Main Section */
+.main-section {
+  flex: 1;
+  background-color: #eaeaea;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* Collapsible Section */
+.history-bar {
+  width: 300px;
+  background-color: #ddd;
+  padding: 8px;
+  overflow-y: auto;
+  transition: width 0.3s ease;
+}
+
+.history-bar.collapsed {
+  width: 32px;
+  padding: 2px;
+  padding-top: 8px;
+}
+.history-bar.collapsed > #history{
+  display: none;
+}
+
+#collapse-history {
+  background-color: #333;
+  color: white;
+  border: none;
+  padding: 4px;
+  width: 100%;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+#collapse-history:after {
+  content: ">";
+}
+
+.history-bar.collapsed > #collapse-history:after{
+  content: "<";
+}
+
+#history {
+  margin-top: 10px;
+}
