@@ -301,6 +301,8 @@ typedef enum { DAC_AUTO, DAC_MANUAL } dac_control_t;
 // Global variables (voltages in mV, currents in mA, power in mW, shunts in 0.01 mV)
 uint16_t current_desired = 0;
 uint16_t voltage_load, current_load, voltage_power, current_power, shunt1, shunt2, power2, loadtemp = 0;
+
+bool query = false;
 uint16_t argument1, argument2;
 uint16_t loadpower = 0;
 char     cmd;
@@ -677,14 +679,17 @@ void set_fan(void) {
 
 // Wait for, read and parse command string
 void CMD_read(void) {
-  while(!CMD_compl) { updateSensors(); _delay_ms(STEP); }
+  while(!CMD_compl) { updateLoadSensors(); _delay_ms(STEP); }
   uint8_t i = 0;
   cmd = CMD_buffer[0];
-  argument1 = 0; argument2 = 0;
-  while(CMD_buffer[++i] == ' ');
-  while(CMD_buffer[i] > ' ') argument1 = argument1 * 10 + CMD_buffer[i++] - '0';
-  while(CMD_buffer[i] == ' ') i++;
-  while(CMD_buffer[i] != 0)  argument2 = argument2 * 10 + CMD_buffer[i++] - '0';
+  argument1 = 0; argument2 = 0; query = false;
+  if (CMD_buffer[1] == '?') query = true;
+  else {
+    while(CMD_buffer[++i] == ' ');
+    while(CMD_buffer[i] > ' ') argument1 = argument1 * 10 + CMD_buffer[i++] - '0';
+    while(CMD_buffer[i] == ' ') i++;
+    while(CMD_buffer[i] != 0)  argument2 = argument2 * 10 + CMD_buffer[i++] - '0';
+  }
   CMD_compl = 0;
 }
 
@@ -966,8 +971,15 @@ int main(void) {
                   UART_println(DONE);    break;
       case 's':   set_current(argument1);        // set load current
                   UART_println(DONE);    break; 
-      case 'd':   DAC0.DATA = argument1;
-                  dac_control = DAC_MANUAL; break;
+      case 'd':
+        if (query) {
+          UART_printInt(DAC0.DATA);
+          UART_println("");
+        } else {
+          DAC0.DATA = argument1;
+          dac_control = DAC_MANUAL;
+        }
+        break;
       case 'p':   transmit_temperature(); break;   // transmit NTC temp
       case 'w':   set_fan(); break;
       default:    ledError(); CMD_ptr = 0; break;
