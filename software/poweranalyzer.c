@@ -215,7 +215,14 @@
 #define ULCAL2      1                   // linear voltage calibration factor (supply)
 
 // Parameters
-#define MAXCURRENT  5000
+
+// XXX(mmalecki): we're rated to 5 A and technically could do much, much more, given
+// an appropriate cooling solution. However, INA219's maximum sense voltage and the
+// current shunt resistors in place limit our capabilities.
+// We could set a divider (PGA) on INA side, or change out the resistors. For the
+// time being, however, limit the maximum current to a unit under, so the controller
+// is able to operate.
+#define MAXCURRENT  4999
 #define MAXPOWER    25000               // maximum power of the load in mW -> turn off load
 #define FANONPOWER  700                 // power in mW to turn fan on
 #define FANOFFPOWER 500                 // power in mW to turn fan off
