@@ -753,19 +753,18 @@ void transmit_sensors() {
   uint32_t next_step = step_time;
   uint32_t last_step = step_time + argument2;
   do {
+    updateSensors();
     if ((step_time = MIL_read()) >= next_step) {
-      updateSensors();
       UART_printInt(current_load); UART_write(SEPARATOR);
       UART_printInt(voltage_load); UART_write(SEPARATOR);
       UART_printInt(current_power); UART_write(SEPARATOR);
       UART_printInt(voltage_power);
       UART_println("");
       next_step = step_time + argument1;
-      _delay_ms(STEP);
     }
+    _delay_ms(STEP);
   } while (!CMD_isTerminated() && next_step < last_step);
 }
-
 
 // Perform a voltage regulation test up to the max load current
 /* void regulationTest(void) { */
