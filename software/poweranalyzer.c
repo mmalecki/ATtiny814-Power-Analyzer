@@ -310,7 +310,7 @@ dac_control_t dac_control = DAC_AUTO;
 #define UART_BAUD_RATE    ((float)(F_CPU * 64 / (16 * (float)UART_BAUD)) + 0.5)
 #define UART_ready()      (USART0.STATUS & USART_DREIF_bm)
 
-#define UART_LOOPBACK
+#undef UART_LOOPBACK
 #undef UART_DEBUG
 
 // UART init
