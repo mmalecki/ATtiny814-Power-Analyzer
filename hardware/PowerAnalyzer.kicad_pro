@@ -508,6 +508,7 @@
     "netclass_assignments": {
       "DAC": "ANALOG",
       "Net-(R10-Pad2)": "ANALOG",
+      "Net-(R23-Pad2)": "ANALOG",
       "Net-(U4-+)": "ANALOG",
       "Net-(U4--)": "ANALOG"
     },
@@ -546,7 +547,7 @@
       "plot": "out",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "PowerAnalyzer.step",
       "svg": "",
       "vrml": ""
     },

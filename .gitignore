@@ -29,6 +29,7 @@ fp-info-cache
 *.csv
 
 hardware/out
+hardware/*.step
 
 # Built software files
 software/*.asm
