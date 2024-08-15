@@ -259,7 +259,8 @@
 // INA219 register values
 #define INA1ADDR    0b10000000          // I2C write address of INA on the load side 
 #define INA2ADDR    0b10000010          // I2C write address of INA on the power side
-#define INA1CONFIG  0b0010011001100111  // INA config register according to datasheet
+
+#define INA1CONFIG  0b0010101001100111  // INA config register according to datasheet
 #define INA2CONFIG  0b0010111001100111  // INA config register according to datasheet
 #define INAFASTBUS  0b0010110001000110  // INA config register according to datasheet
 #define INAFASTBOTH 0b0010110001000111  // INA config register according to datasheet
