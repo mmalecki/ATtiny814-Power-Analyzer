@@ -224,15 +224,24 @@
 // is able to operate.
 #define MAXCURRENT  4999
 #define MAXPOWER    25000               // maximum power of the load in mW -> turn off load
+
 #define FANONPOWER  700                 // power in mW to turn fan on
 #define FANOFFPOWER 500                 // power in mW to turn fan off
 #define MAXTEMP     85                  // max temperature
 #define FANONTEMP   50                  // fan-on temperature
 #define FANOFFTEMP  45                  // fan-off temperature
 
+#undef CONTROLLER_DEBUG
+
 #define DAC_MIN 0
 #define DAC_MAX 255
-#define DAC_K   0.25
+
+#define DAC_LOW_CURRENT_P   0.075
+#define DAC_LOW_CURRENT     1000
+#define DAC_HIGH_CURRENT_P  0.05
+
+/* #define DAC_MAX_CURRENT 7500 */
+#define DAC_MAX_CHANGE 20.0
 
 // NTC probe
 #define _K 273.15
@@ -245,12 +254,12 @@
 #define NTC_DIV_R1  10000.0
 #define ADC_MAX     1023.0
 
-#define STEP        1    // control loop time step, us
+#define STEP        50    // control loop time step, ms
 
-#define ADJ_STEP    200  // adjustment step, ms: how often to adjust current in test programs
+#define ADJ_STEP    500  // adjustment step, ms: how often to adjust current in test programs
 #define CURRENT_ADJ 10
 
-#define REPORT_STEP 25  // report time step, ms: how often to report
+#define REPORT_STEP 50  // report time step, ms: how often to report
 
 #define BLINK_SHORT_INFO  250
 #define BLINK_INFO        500
@@ -542,6 +551,7 @@ void DAC_init(void) {
 
 void set_current(uint16_t current) {
   dac_control = DAC_AUTO;
+  if (current == 0) DAC0.DATA = 0; // short-circuit this particular decision
   current_desired = MIN(current, MAXCURRENT);
 }
 
@@ -575,8 +585,8 @@ void overload() {
   set_current(0);
   fan_control = FAN_AUTO;
   pinHigh(FAN_PIN);
-  ledError();
   UART_println(OVERLOAD);
+  ledError();
 }
 
 // Read all sensors of the electronic load and set the fan
@@ -593,12 +603,27 @@ uint8_t updateLoadSensors(void) {
     if (current_desired == 0) DAC0.DATA = 0;
     else if (current_load != current_desired) {
       int16_t error = current_desired - current_load;
-      int16_t change = current_load == 0 ? 2 : (error > 0 ? 1 : -1);
+      float p = (current_load < DAC_LOW_CURRENT) ? DAC_LOW_CURRENT_P : DAC_HIGH_CURRENT_P;
+      int8_t cs  = (int8_t) MAX(-DAC_MAX_CHANGE, MIN(DAC_MAX_CHANGE, round((float) p * (float) error)));
+
+#ifdef CONTROLLER_DEBUG
+      UART_printInt(current_load);
+      UART_write(SEPARATOR);
+      UART_printInt(current_desired);
+      UART_write(SEPARATOR);
+      UART_printInt(DAC0.DATA);
+      UART_write(SEPARATOR);
+      UART_printInt(error);
+      UART_write(SEPARATOR);
+      UART_printInt(cs);
+      UART_println("");
+#endif
+
       DAC0.DATA = MAX(
         DAC_MIN,
         MIN(
           DAC_MAX,
-          DAC0.DATA + change
+          DAC0.DATA + cs
         )
       );
     }
