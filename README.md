@@ -6,7 +6,7 @@ Pocket Power Prowler is a tiny programmable constant current dummy load with vol
 
 It is programmable via USB using a simple text-based protocol, and [in the future](https://github.com/mmalecki/Pocket-Power-Prowler/issues/4)), the [SCPI protocol](https://en.wikipedia.org/wiki/Standard_Commands_for_Programmable_Instruments).
 
-![pic1.jpg](https://raw.githubusercontent.com/wagiminator/ATtiny814-Power-Analyzer/master/documentation/PowerAnalyzer_pic1.jpg)
+![Pocket Power Prowler picture](./docs/pocket-power-prowler.png)
 
 It is based on the [ATtiny814 Power Analyzer](https://github.com/wagiminator/ATtiny814-Power-Analyzer) by [@wagiminator](https://github.com/wagiminator/ATtiny814-Power-Analyzer).
 If you're interested in how the project changed, check out the [changelog](CHANGELOG.md).
