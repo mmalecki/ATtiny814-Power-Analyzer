@@ -18,6 +18,7 @@ current control.
 * Add a low-pass RC filter on both input and output of the opamp
 * Move OpAmp closer to DAC, reducing noise pick up
 * Add sampling capacitor to NTC
+* Add ferrite bead to USB power
 
 ## Software
 * Add direct NTC probe temperature calculations
