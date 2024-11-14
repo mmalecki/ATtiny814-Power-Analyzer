@@ -548,7 +548,7 @@
       "pos_files": "",
       "specctra_dsn": "",
       "step": "PowerAnalyzer.step",
-      "svg": "",
+      "svg": "out/",
       "vrml": ""
     },
     "page_layout_descr_file": ""
